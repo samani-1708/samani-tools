@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Add Page Numbers to PDF - Free Online Tool",
-  description: "Add page numbers to PDF online for free. Customize position, format, and starting number. Works on all devices.",
+export const metadata: Metadata = createMetadata({
+  title: "Add Page Numbers to PDF",
+  description:
+    "Add page numbers to PDF files with configurable position, format, and start index.",
+  path: "/pdf/page-numbers",
   keywords: ["add page numbers pdf", "pdf page numbers", "number pdf pages", "pdf pagination", "pdf editor"],
-};
+});
 
 export default function PageNumbersLayout({
   children,

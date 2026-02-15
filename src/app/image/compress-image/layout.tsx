@@ -1,10 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Compress Image - Reduce JPG PNG WEBP AVIF Size | SamAni",
+export const metadata: Metadata = createMetadata({
+  title: "Compress Image",
   description:
-    "Compress images in your browser with quality and size controls. Keep privacy while reducing file size.",
-};
+    "Reduce JPG, PNG, WEBP, and AVIF image size with quality controls directly in your browser.",
+  path: "/image/compress-image",
+  keywords: [
+    "compress image",
+    "reduce image size",
+    "jpg compressor",
+    "png compressor",
+    "webp compressor",
+    "avif compressor",
+  ],
+});
 
 export const viewport: Viewport = {
   width: "device-width",

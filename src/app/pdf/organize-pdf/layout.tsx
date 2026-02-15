@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Organize PDF - Free Online PDF Page Organizer",
-  description: "Organize PDF pages online for free. Delete, rotate, reorder, and add pages. Drag and drop to rearrange. Works on all devices.",
+export const metadata: Metadata = createMetadata({
+  title: "Organize PDF",
+  description:
+    "Organize PDF pages online by reordering, rotating, deleting, or adding pages.",
+  path: "/pdf/organize-pdf",
   keywords: ["organize pdf", "rearrange pdf pages", "delete pdf pages", "reorder pdf", "pdf page manager"],
-};
+});
 
 export default function OrganizePdfLayout({
   children,

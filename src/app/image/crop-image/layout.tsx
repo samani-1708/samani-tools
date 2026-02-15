@@ -1,9 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Crop Image - Free Online Crop Tool | SamAni",
-  description: "Crop images precisely with drag and zoom controls in your browser.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Crop Image",
+  description:
+    "Crop images precisely with drag, zoom, rotate, and flip controls directly in your browser.",
+  path: "/image/crop-image",
+  keywords: [
+    "crop image",
+    "image cropper",
+    "crop photo online",
+    "rotate image",
+    "flip image",
+  ],
+});
 
 export const viewport: Viewport = {
   width: "device-width",

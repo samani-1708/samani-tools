@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Merge Pdf - Free Online PDF Merge | SamAni",
-  description: "",
-  keywords: ['JPG to PDF', 'convert JPG to PDF', 'merge JPG files', 'free JPG to PDF converter'],
-};
+export const metadata: Metadata = createMetadata({
+  title: "Merge PDF",
+  description:
+    "Merge multiple PDF files into one document in the order you choose.",
+  path: "/pdf/merge-pdf",
+  keywords: ["merge pdf", "combine pdf", "join pdf files", "pdf merger"],
+});
 
 export const viewport: Viewport = {
   width: 'device-width',

@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Crop PDF - Free Online PDF Cropper",
+export const metadata: Metadata = createMetadata({
+  title: "Crop PDF",
   description:
-    "Crop PDF pages online for free. Draw a crop box to select the area you want to keep. Works on all devices.",
-  keywords: [
-    "crop pdf",
-    "pdf cropper",
-    "trim pdf",
-    "cut pdf pages",
-    "pdf editor",
-  ],
-};
+    "Crop PDF pages online by selecting a crop box for each page directly in your browser.",
+  path: "/pdf/crop-pdf",
+  keywords: ["crop pdf", "pdf cropper", "trim pdf", "cut pdf pages", "pdf editor"],
+});
 
 export default function CropPdfLayout({
   children,

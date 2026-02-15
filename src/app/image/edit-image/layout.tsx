@@ -1,10 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Edit Image - Full Image Editor Online | SamAni",
+export const metadata: Metadata = createMetadata({
+  title: "Edit Image",
   description:
-    "Edit images with crop, filters, resize, annotate, and watermark tools directly in your browser.",
-};
+    "Use a full online image editor with crop, resize, filters, annotations, and watermark controls.",
+  path: "/image/edit-image",
+  keywords: [
+    "edit image online",
+    "photo editor",
+    "online image editor",
+    "image filters",
+    "annotate image",
+  ],
+});
 
 export const viewport: Viewport = {
   width: "device-width",

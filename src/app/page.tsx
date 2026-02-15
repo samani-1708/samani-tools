@@ -1,7 +1,23 @@
+import type { Metadata } from "next";
 import { Separator } from "@/components/ui/separator";
 import { IMAGE_TOOLS_HEADER, PDF_TOOLS_HEADER } from "./common/constants";
 import { SITE_HERO_CONFIG, SiteHero } from "./site-hero";
 import { ToolCard } from "./common/tool-card";
+import { createMetadata } from "./common/seo";
+
+export const metadata: Metadata = createMetadata({
+  title: "Free PDF and Image Tools",
+  description:
+    "All-in-one toolkit for PDF and image editing in your browser. Merge, split, compress, crop, convert, watermark, and resize with privacy-first processing.",
+  path: "/",
+  keywords: [
+    "pdf and image tools",
+    "online file editor",
+    "free browser tools",
+    "merge split compress convert",
+    "private file processing",
+  ],
+});
 
 export default function Home() {
   return (

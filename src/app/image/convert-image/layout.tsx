@@ -1,10 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Convert Image - PNG JPG WEBP AVIF | SamAni",
+export const metadata: Metadata = createMetadata({
+  title: "Convert Image",
   description:
-    "Convert images between PNG, JPG, WEBP, and AVIF directly in your browser. HEIC output currently depends on browser support.",
-};
+    "Convert images between JPG, PNG, WEBP, AVIF, and TIFF formats in your browser with privacy-first processing.",
+  path: "/image/convert-image",
+  keywords: [
+    "convert image",
+    "jpg to png",
+    "png to jpg",
+    "webp converter",
+    "avif converter",
+    "tiff converter",
+  ],
+});
 
 export const viewport: Viewport = {
   width: "device-width",

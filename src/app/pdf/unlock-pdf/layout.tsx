@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Unlock PDF - Free Online PDF Password Remover",
-  description: "Remove password protection from PDF online for free. Unlock password-protected PDFs instantly. Works on all devices.",
+export const metadata: Metadata = createMetadata({
+  title: "Unlock PDF",
+  description:
+    "Remove PDF password protection online for files you are authorized to open.",
+  path: "/pdf/unlock-pdf",
   keywords: ["unlock pdf", "remove pdf password", "decrypt pdf", "pdf password remover", "unprotect pdf"],
-};
+});
 
 export default function UnlockPdfLayout({
   children,

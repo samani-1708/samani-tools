@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Lock PDF - Free Online PDF Password Protection",
-  description: "Protect your PDF with a password online for free. Add password protection to prevent unauthorized access. Works on all devices.",
+export const metadata: Metadata = createMetadata({
+  title: "Lock PDF",
+  description:
+    "Protect PDF files with password encryption directly in your browser.",
+  path: "/pdf/lock-pdf",
   keywords: ["lock pdf", "password protect pdf", "encrypt pdf", "secure pdf", "pdf security"],
-};
+});
 
 export default function LockPdfLayout({
   children,

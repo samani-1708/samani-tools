@@ -3,37 +3,72 @@ import Script from "next/script";
 import { SiteHeader } from "./common/site-header/site-header";
 import { SiteFooter } from "./common/site-footer/site-footer";
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_NAME, SITE_URL } from "./common/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SamAni - PDF, Image, Text utility tools",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "SamAni - Free PDF and Image Tools",
+    template: "%s | SamAni",
+  },
   description:
-    "A collection of finely crafted utility tools built with open source and love, for private and secure use.",
+    "Free browser-based tools to edit PDFs and images: merge, split, compress, convert, crop, watermark, resize, and more. Private and secure.",
   keywords: [
-    "image to pdf",
-    "convert jpg to pdf",
-    "online pdf tool",
-    "private tool",
-    "secure tool",
-    "pdf tool",
-    "image tool",
-    "text tool",
-    "utility tool",
-    "free online editor",
-    "compress image",
+    "free pdf tools",
+    "free image tools",
     "merge pdf",
+    "split pdf",
+    "compress pdf",
+    "watermark pdf",
+    "crop pdf",
+    "image to pdf",
+    "compress image",
+    "convert image",
+    "resize image",
+    "crop image",
+    "watermark image",
+    "online file tools",
+    "browser based tools",
+    "private file processing",
   ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "SamAni - Free PDF and Image Tools",
+    description:
+      "Edit PDF and image files directly in your browser. Fast, private, and free.",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "SamAni - Free PDF and Image Tools",
+    description:
+      "Merge, split, compress, convert, crop, watermark, and resize files in your browser.",
+  },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
   },
   authors: [
     { name: "vtechguys", url: "https://github.com/vtechguys" },
     { name: "samani-1708", url: "https://github.com/samani-1708" },
   ],
   creator: "SamAni",
-  publisher: "SamAni",
-  category: "Utility",
+  publisher: SITE_NAME,
+  applicationName: SITE_NAME,
+  category: "Technology",
   referrer: "origin-when-cross-origin",
 };
 

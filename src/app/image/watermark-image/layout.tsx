@@ -1,10 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Watermark Image - Add Text Watermark Online | SamAni",
+export const metadata: Metadata = createMetadata({
+  title: "Watermark Image",
   description:
-    "Add customizable text watermarks to images with position, color, and opacity controls.",
-};
+    "Add text watermark to images with controls for size, color, opacity, rotation, and position.",
+  path: "/image/watermark-image",
+  keywords: [
+    "watermark image",
+    "add watermark to photo",
+    "text watermark",
+    "copyright watermark",
+    "watermark tool online",
+  ],
+});
 
 export const viewport: Viewport = {
   width: "device-width",

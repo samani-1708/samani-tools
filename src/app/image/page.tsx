@@ -1,5 +1,22 @@
+import type { Metadata } from "next";
 import { IMAGE_TOOLS_HEADER } from "../common/constants";
 import { ToolCard } from "../common/tool-card";
+import { createMetadata } from "../common/seo";
+
+export const metadata: Metadata = createMetadata({
+  title: "Image Tools",
+  description:
+    "Free browser-based image tools to compress, convert, crop, resize, watermark, and edit photos without uploading to third-party servers.",
+  path: "/image",
+  keywords: [
+    "image tools",
+    "image converter",
+    "image compressor",
+    "photo editor online",
+    "watermark image online",
+    "crop and resize image",
+  ],
+});
 
 export default function ImageToolsPage() {
   return (

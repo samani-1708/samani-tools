@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Compress PDF - Free Online PDF Compressor | SamAni",
-  description: "Compress PDF files instantly. Reduce file size while maintaining quality. Secure, free, no signup.",
-  keywords: ['Compress PDF', 'PDF compressor', 'reduce PDF size', 'free PDF compressor'],
-};
+export const metadata: Metadata = createMetadata({
+  title: "Compress PDF",
+  description:
+    "Compress PDF files online and reduce file size while keeping document quality.",
+  path: "/pdf/compress-pdf",
+  keywords: ["compress pdf", "pdf compressor", "reduce pdf size", "free pdf compressor"],
+});
 
 export const viewport: Viewport = {
   width: 'device-width',

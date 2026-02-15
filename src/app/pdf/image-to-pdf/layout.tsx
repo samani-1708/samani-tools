@@ -1,16 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Image to PDF - Free Online Converter | SamAni",
+export const metadata: Metadata = createMetadata({
+  title: "Image to PDF",
   description:
-    "Convert images to PDF instantly. Support for JPG, PNG. Set orientation, page size, and margins. Free, secure, no signup.",
-  keywords: [
-    "Image to PDF",
-    "JPG to PDF",
-    "PNG to PDF",
-    "free image converter",
-  ],
-};
+    "Convert JPG and PNG images to PDF with orientation, page-size, and margin options.",
+  path: "/pdf/image-to-pdf",
+  keywords: ["image to pdf", "jpg to pdf", "png to pdf", "free image to pdf converter"],
+});
 
 export const viewport: Viewport = {
   width: "device-width",

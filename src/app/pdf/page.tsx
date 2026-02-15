@@ -1,5 +1,23 @@
+import type { Metadata } from "next";
 import { PDF_TOOLS_HEADER } from "../common/constants";
 import { ToolCard } from "../common/tool-card";
+import { createMetadata } from "../common/seo";
+
+export const metadata: Metadata = createMetadata({
+  title: "PDF Tools",
+  description:
+    "Free online PDF tools to merge, split, compress, rotate, crop, watermark, lock, unlock, and organize PDF files directly in your browser.",
+  path: "/pdf",
+  keywords: [
+    "pdf tools",
+    "merge pdf",
+    "split pdf",
+    "compress pdf online",
+    "watermark pdf",
+    "lock unlock pdf",
+    "organize pdf pages",
+  ],
+});
 
 export default function PDFToolsPage() {
   return (

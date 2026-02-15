@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Watermark PDF - Free Online PDF Watermarking Tool | SamAni",
-  description: "Add custom watermarks to your PDF documents. Support for text and image watermarks with full customization. Secure, free, no signup.",
-  keywords: ['Watermark PDF', 'PDF watermark', 'add watermark to PDF', 'free PDF watermarking tool'],
-};
+export const metadata: Metadata = createMetadata({
+  title: "Watermark PDF",
+  description:
+    "Add text or image watermarks to PDF files with position, style, and opacity controls.",
+  path: "/pdf/watermark-pdf",
+  keywords: ["watermark pdf", "pdf watermark", "add watermark to pdf", "free pdf watermark tool"],
+});
 
 export const viewport: Viewport = {
   width: 'device-width',

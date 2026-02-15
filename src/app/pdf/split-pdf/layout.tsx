@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Split PDF - Free Online PDF Splitter | SamAni",
-  description: "Split PDF files instantly. Extract pages by range, split into individual pages, or split by size. Secure, free, no signup.",
-  keywords: ['Split PDF', 'PDF splitter', 'extract PDF pages', 'free PDF splitter'],
-};
+export const metadata: Metadata = createMetadata({
+  title: "Split PDF",
+  description:
+    "Split PDF files by page ranges or extract single pages with browser-based processing.",
+  path: "/pdf/split-pdf",
+  keywords: ["split pdf", "pdf splitter", "extract pdf pages", "free pdf splitter"],
+});
 
 export const viewport: Viewport = {
   width: 'device-width',

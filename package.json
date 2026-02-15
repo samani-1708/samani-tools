@@ -9,7 +9,8 @@
     "prebuild": "node scripts/copy-pdfcpu.mjs && node scripts/copy-wasm-vips.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:seo": "node scripts/seo-check.mjs"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.4.0",

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { createMetadata } from "@/app/common/seo";
 
-export const metadata: Metadata = {
-  title: "Rotate PDF - Free Online PDF Rotator",
-  description: "Rotate PDF pages online for free. Rotate pages left or right by 90, 180, or 270 degrees. Works on all devices.",
+export const metadata: Metadata = createMetadata({
+  title: "Rotate PDF",
+  description:
+    "Rotate PDF pages by 90, 180, or 270 degrees with quick page-level controls.",
+  path: "/pdf/rotate-pdf",
   keywords: ["rotate pdf", "pdf rotator", "turn pdf pages", "flip pdf", "pdf editor"],
-};
+});
 
 export default function RotatePdfLayout({
   children,
