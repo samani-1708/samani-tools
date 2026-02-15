@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test PDF Split</title>
+</head>
+<body>
+    <h1>Test PDF Split with PDFCPU</h1>
+    <input type="file" id="fileInput" accept="application/pdf" />
+    <button id="splitBtn">Split PDF</button>
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('splitBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a PDF file');
+                return;
+            }
+
+            console.log('Starting split test...');
+            
+            try {
+                // Read file as array buffer
+                const buffer = await file.arrayBuffer();
+                console.log('File buffer size:', buffer.byteLength);
+
+                // Test ranges: split pages 1-2 and 3-4
+                const ranges = [[1, 2], [3, 4]];
+                console.log('Test ranges:', ranges);
+
+                // Load Comlink
+                const script = document.createElement('script');
+                script.src = '/js/comlinkjs/3.1.1/umd/comlink.js';
+                document.head.appendChild(script);
+                
+                await new Promise(resolve => script.onload = resolve);
+
+                // Create worker
+                const WorkerThread = Comlink.proxy(
+                    new Worker('/js/pdfcpu/worker.js')
+                );
+
+                console.log('Creating worker instance...');
+                const workerInstance = await new WorkerThread();
+                
+                console.log('Calling split method...');
+                const results = await workerInstance.split(buffer, ranges);
+                
+                console.log('Split results:', results);
+                document.getElementById('results').innerHTML = 
+                    `Split complete! Got ${results ? results.length : 0} files`;
+                    
+            } catch (error) {
+                console.error('Split error:', error);
+                document.getElementById('results').innerHTML = 
+                    `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

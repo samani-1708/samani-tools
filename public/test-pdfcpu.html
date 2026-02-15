@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test PDFCPU Worker</title>
+</head>
+<body>
+    <h1>Test PDFCPU Split</h1>
+    <input type="file" id="fileInput" accept="application/pdf" />
+    <button id="testBtn">Test Split</button>
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <script>
+        async function testSplit() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                const fileInput = document.getElementById('fileInput');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    alert('Please select a PDF file first');
+                    return;
+                }
+                
+                statusDiv.textContent = 'Reading file...';
+                const buffer = await file.arrayBuffer();
+                
+                statusDiv.textContent = 'Loading Comlink...';
+                
+                // Load Comlink
+                if (!window.Comlink) {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = '/js/comlinkjs/3.1.1/umd/comlink.js';
+                        script.onload = () => {
+                            console.log('Comlink loaded');
+                            resolve();
+                        };
+                        script.onerror = (e) => {
+                            console.error('Failed to load Comlink:', e);
+                            reject(e);
+                        };
+                        document.head.appendChild(script);
+                    });
+                }
+                
+                statusDiv.textContent = 'Creating worker...';
+                
+                // Create worker
+                const WorkerThread = window.Comlink.proxy(
+                    new Worker('/js/pdfcpu/worker.js')
+                );
+                
+                statusDiv.textContent = 'Initializing worker...';
+                const workerInstance = await new WorkerThread();
+                
+                // Test with simple ranges - pages 1 and 2 separately
+                const ranges = [[1], [2]];
+                
+                statusDiv.textContent = 'Splitting PDF...';
+                console.log('Calling split with ranges:', ranges);
+                
+                const results = await workerInstance.split(buffer, ranges);
+                
+                console.log('Split results:', results);
+                statusDiv.textContent = 'Split complete!';
+                
+                // Display results
+                resultsDiv.innerHTML = `
+                    <h2>Results:</h2>
+                    <p>Successfully split into ${results.length} files:</p>
+                    <ul>
+                        ${results.map((buf, i) => 
+                            `<li>File ${i + 1}: ${buf.byteLength} bytes</li>`
+                        ).join('')}
+                    </ul>
+                `;
+                
+                // Create download links
+                results.forEach((buf, i) => {
+                    const blob = new Blob([buf], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `split-${i + 1}.pdf`;
+                    link.textContent = `Download Part ${i + 1}`;
+                    link.style.display = 'block';
+                    link.style.margin = '10px 0';
+                    resultsDiv.appendChild(link);
+                });
+                
+            } catch (error) {
+                console.error('Test error:', error);
+                statusDiv.textContent = 'Error: ' + error.message;
+                resultsDiv.innerHTML = `<pre>${error.stack}</pre>`;
+            }
+        }
+        
+        document.getElementById('testBtn').addEventListener('click', testSplit);
+    </script>
+</body>
+</html>
