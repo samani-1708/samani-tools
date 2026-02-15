@@ -1,0 +1,8 @@
+.set-coordinates-example {
+  position: relative;
+}
+
+.set-coordinates-example .set-coordinates-example__cropper {
+  max-height: 500px;
+  background: #354146;
+}

@@ -17,11 +17,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  DownloadIcon,
   PlusIcon,
+  RotateCcwIcon,
   TrashIcon
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ImageInput, Margin, PageSize } from "../common/types";
 import { usePDFUtils } from "../common/use-pdf-utils.hooks";
 import { PDFToolLayout } from "../common/layouts/pdf-tool-layout";
@@ -47,6 +49,7 @@ export function PageClient() {
   const [margin, setMargin] = useState<Margin>("small");
 
   const [isConverting, setIsConverting] = useState(false);
+  const [result, setResult] = useState<{ url: string; filename: string } | null>(null);
 
   const [isLoaded, pdfUtils] = usePDFUtils();
 
@@ -78,15 +81,37 @@ export function PageClient() {
       });
 
       const url = createPDFBlobURL(buffer);
-
-      downloadLink(url, "images-to-pdf.pdf");
-      URL.revokeObjectURL(url);
+      setResult({ url, filename: "images-to-pdf.pdf" });
     } catch (error) {
       console.error("Error converting images to PDF:", error);
     } finally {
       setIsConverting(false);
     }
   };
+
+  function handleDownload() {
+    if (!result) return;
+    downloadLink(result.url, result.filename);
+  }
+
+  function handleReset() {
+    if (result?.url) URL.revokeObjectURL(result.url);
+    setResult(null);
+    setFiles([]);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (result?.url) URL.revokeObjectURL(result.url);
+    };
+  }, [result?.url]);
+
+  useEffect(() => {
+    if (!result?.url) return;
+    URL.revokeObjectURL(result.url);
+    setResult(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSize, margin, files.map((f) => f.id).join("|")]);
 
   return (
     <PDFToolLayout
@@ -241,13 +266,26 @@ export function PageClient() {
         </>
       }
       actions={
-        <ProcessingButton
-          onClick={handleConvert}
-          disabled={!canConvert}
-          isProcessing={isConverting}
-          label="Convert to PDF"
-          processingLabel="Converting..."
-        />
+        result ? (
+          <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download PDF">
+            <DownloadIcon className="w-5 h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Download</span>
+          </Button>
+        ) : (
+          <ProcessingButton
+            onClick={handleConvert}
+            disabled={!canConvert}
+            isProcessing={isConverting}
+            label="Convert to PDF"
+            processingLabel="Converting..."
+          />
+        )
+      }
+      secondaryActions={
+        <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
+          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Start Over</span>
+        </Button>
       }
     />
   );

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { DiamondMinusIcon, ImageIcon, Loader2Icon, MinusIcon, PlusIcon, TypeIcon } from "lucide-react";
+import { DiamondMinusIcon, DownloadIcon, ImageIcon, Loader2Icon, MinusIcon, PlusIcon, RotateCcwIcon, TypeIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -70,9 +70,9 @@ export function PageClient() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [settings, setSettings] = useState<WatermarkSettings>(DEFAULT_WATERMARK_SETTINGS);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [result, setResult] = useState<{ url: string; filename: string } | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const urlsToRevokeRef = useRef<string[]>([]);
 
   const fileUploaded: FileUploaded | null = files?.[0] || null;
 
@@ -135,12 +135,18 @@ export function PageClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileUploaded, isLoaded, settings]);
 
-  // Cleanup URLs on unmount
   useEffect(() => {
     return () => {
-      urlsToRevokeRef.current.forEach((url) => URL.revokeObjectURL(url));
+      if (result?.url) URL.revokeObjectURL(result.url);
     };
-  }, []);
+  }, [result?.url]);
+
+  useEffect(() => {
+    if (!result?.url) return;
+    URL.revokeObjectURL(result.url);
+    setResult(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileUploaded?.id, settings]);
 
   const handleApplyWatermark = async () => {
     if (!fileUploaded || !isLoaded) return;
@@ -163,8 +169,7 @@ export function PageClient() {
 
       const url = createPDFBlobURL(bytes);
       const originalName = fileUploaded.name.replace(/\.pdf$/i, "");
-      downloadLink(url, `${originalName}-watermarked.pdf`);
-      URL.revokeObjectURL(url);
+      setResult({ url, filename: `${originalName}-watermarked.pdf` });
 
       toast.success("Watermark applied successfully!");
     } catch (error) {
@@ -187,10 +192,17 @@ export function PageClient() {
   };
 
   const handleReset = () => {
+    if (result?.url) URL.revokeObjectURL(result.url);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setResult(null);
     setPreviewUrl(null);
     setSettings(DEFAULT_WATERMARK_SETTINGS);
     resetInput();
+  };
+
+  const handleDownload = () => {
+    if (!result) return;
+    downloadLink(result.url, result.filename);
   };
 
   const canApply = fileUploaded && isLoaded && !isProcessing &&
@@ -213,9 +225,7 @@ export function PageClient() {
         <div className="flex flex-wrap gap-6 justify-center items-start">
           {/* Fixed width container for preview */}
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 w-full max-w-[18rem] flex-shrink-0">
-            <p className="text-xs text-muted-foreground mb-3 text-center">
-              Live Preview
-            </p>
+           
             <div className="w-full aspect-[3/4] bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
               {previewUrl ? (
                 <ViewPDF
@@ -484,21 +494,30 @@ export function PageClient() {
         </>
       }
       actions={
-        <ProcessingButton
-          onClick={handleApplyWatermark}
-          disabled={!canApply}
-          isProcessing={isProcessing}
-          label="Apply Watermark"
-          processingLabel="Applying..."
-        />
+        result ? (
+          <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download watermarked PDF">
+            <DownloadIcon className="w-5 h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Download</span>
+          </Button>
+        ) : (
+          <ProcessingButton
+            onClick={handleApplyWatermark}
+            disabled={!canApply}
+            isProcessing={isProcessing}
+            label="Apply Watermark"
+            processingLabel="Applying..."
+          />
+        )
       }
       secondaryActions={
         <Button
           variant="outline"
           onClick={handleReset}
           className="w-full"
+          aria-label="Start over"
         >
-          Start Over
+          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Start Over</span>
         </Button>
       }
     />

@@ -10,9 +10,10 @@ import {
   createPDFBlobURL,
   downloadLink,
 } from "@/app/common/utils";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { DownloadIcon, RotateCcwIcon } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mover, PrintPage } from "../common/ui";
 import { fakeTransformFileWithPages, usePDFUtils } from "../common/use-pdf-utils.hooks";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ export function PageClient() {
 
   const { deleteFile, moveFileUp, moveFileDown } = fileListManagerUtils(selectedFileId , fileWithPages);
   const [isMerging, setIsMerging] = useState(false);
+  const [mergedResult, setMergedResult] = useState<{ url: string; filename: string } | null>(null);
 
   const [isLoaded, { merge }] = usePDFUtils();
 
@@ -55,8 +57,8 @@ export function PageClient() {
       const mergedBytes = await merge(fileNativeObjects);
 
       const url = createPDFBlobURL(mergedBytes);
-      downloadLink(url, "merged.pdf");
-      URL.revokeObjectURL(url);
+      setMergedResult({ url, filename: "merged.pdf" });
+      toast.success("PDFs merged successfully");
     } catch (error ) {
       console.error("Failed to merge PDFs:", error);
       toast.error((error as Error)?.message || "Failed to merge PDFs")
@@ -64,6 +66,30 @@ export function PageClient() {
       setIsMerging(false);
     }
   };
+
+  const handleDownload = () => {
+    if (!mergedResult) return;
+    downloadLink(mergedResult.url, mergedResult.filename);
+  };
+
+  const handleReset = () => {
+    if (mergedResult?.url) URL.revokeObjectURL(mergedResult.url);
+    setMergedResult(null);
+    setFiles([]);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (mergedResult?.url) URL.revokeObjectURL(mergedResult.url);
+    };
+  }, [mergedResult?.url]);
+
+  useEffect(() => {
+    if (!mergedResult?.url) return;
+    URL.revokeObjectURL(mergedResult.url);
+    setMergedResult(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files.map((f) => f.id).join("|")]);
 
   return (
     <PDFToolLayout
@@ -143,13 +169,26 @@ export function PageClient() {
         </>
       }
       actions={
-        <ProcessingButton
-          onClick={handleMerge}
-          disabled={!canMerge}
-          isProcessing={isMerging}
-          label="Merge PDF"
-          processingLabel="Merging..."
-        />
+        mergedResult ? (
+          <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download merged PDF">
+            <DownloadIcon className="w-5 h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Download</span>
+          </Button>
+        ) : (
+          <ProcessingButton
+            onClick={handleMerge}
+            disabled={!canMerge}
+            isProcessing={isMerging}
+            label="Merge PDF"
+            processingLabel="Merging..."
+          />
+        )
+      }
+      secondaryActions={
+        <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
+          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Start Over</span>
+        </Button>
       }
     />
   );

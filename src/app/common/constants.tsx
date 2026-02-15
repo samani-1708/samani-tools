@@ -2,14 +2,12 @@ import {
   BookOpenIcon,
   ComponentIcon,
   CropIcon,
-  FactoryIcon,
   FileImage,
-  FileText,
   HashIcon,
-  ImageMinus,
   LockIcon,
   LucideProps,
   MergeIcon,
+  PencilRuler,
   RotateCcwIcon,
   ScalingIcon,
   SplitIcon,
@@ -234,20 +232,10 @@ const CROP_IMAGE: ToolInfo = {
 const CONVERT_IMAGE: ToolInfo = {
   title: "Convert Image",
   href: "/image/convert-image",
-  icon: RotateCcwIcon,
+  icon: FileImage,
   theme: COLOR_TOKENS.YELLOW,
 
   description: "Convert images between various formats with ease.",
-} as const;
-
-const REMOVE_BG_IMAGE: ToolInfo = {
-  title: "Remove Background",
-  href: "/image/remove-background",
-  icon: ImageMinus,
-  theme: COLOR_TOKENS.ORANGE,
-
-  description:
-    "Effortlessly remove backgrounds from images for a cleaner look.",
 } as const;
 
 const WATERMARK_IMAGE: ToolInfo = {
@@ -260,24 +248,13 @@ const WATERMARK_IMAGE: ToolInfo = {
     "Add custom watermarks to your images for branding or copyright protection.",
 } as const;
 
-const MORE_IMAGE_TOOLS: ToolInfo = {
-  title: "More Image Tools",
-  href: "/image/more-image-tools",
-  icon: FactoryIcon,
-  theme: COLOR_TOKENS.CYAN,
-
+const EDIT_IMAGE: ToolInfo = {
+  title: "Edit Image",
+  href: "/image/edit-image",
+  icon: PencilRuler,
+  theme: COLOR_TOKENS.ORANGE,
   description:
-    "Explore our full suite of image tools for all your editing needs.",
-} as const;
-
-const PDF_TO_IMAGE: ToolInfo = {
-  title: "PDF to Image",
-  href: "/pdf/pdf-to-image",
-  icon: FileText,
-  theme: COLOR_TOKENS.ROSE,
-
-  description:
-    "PDF to Image converter allows you to convert PDF files into various image formats.",
+    "Use a full-feature image editor with crop, filters, annotations, resize, and export.",
 } as const;
 
 export const IMAGE_TOOLS_HEADER: ToolInfo[] = [
@@ -285,10 +262,8 @@ export const IMAGE_TOOLS_HEADER: ToolInfo[] = [
   RESIZE_IMAGE,
   CROP_IMAGE,
   CONVERT_IMAGE,
-  REMOVE_BG_IMAGE,
   WATERMARK_IMAGE,
-  PDF_TO_IMAGE,
-  MORE_IMAGE_TOOLS,
+  EDIT_IMAGE,
 ] as const;
 
 
@@ -299,4 +274,3 @@ export const MEDIA_QUERIES = {
   xl: 'width >= 80rem',
   '2xl': 'width >= 96rem'
 };
-

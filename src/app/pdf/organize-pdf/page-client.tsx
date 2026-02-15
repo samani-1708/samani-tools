@@ -5,6 +5,7 @@ import { UploadButtonFull } from "@/app/common/upload";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRightIcon,
+  DownloadIcon,
   GripVerticalIcon,
   Loader2Icon,
   PlusIcon,
@@ -57,6 +58,7 @@ export function PageClient() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [totalPages, setTotalPages] = useState(-1);
   const [pages, setPages] = useState<PageState[]>([]);
+  const [result, setResult] = useState<{ url: string; filename: string } | null>(null);
   const [dragSourceIndex, setDragSourceIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [layout, setLayout] = useState<{
@@ -279,7 +281,7 @@ export function PageClient() {
 
       const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      downloadLink(url, `organized-${fileUploaded.name}`);
+      setResult({ url, filename: `organized-${fileUploaded.name}` });
       toast.success("PDF organized successfully!");
     } catch (error) {
       console.error(error);
@@ -299,12 +301,18 @@ export function PageClient() {
     );
   }, [totalPages]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleReset = useCallback(() => {
+    if (result?.url) URL.revokeObjectURL(result.url);
+    setResult(null);
     resetInput();
     setTotalPages(-1);
     setPages([]);
-  }, [resetInput]);
+  }, [resetInput, result?.url]);
+
+  const handleDownload = useCallback(() => {
+    if (!result) return;
+    downloadLink(result.url, result.filename);
+  }, [result]);
 
   // ── 5. Effects ────────────────────────────────────────────────────────
 
@@ -314,6 +322,19 @@ export function PageClient() {
       if (pdfSrcUrl) URL.revokeObjectURL(pdfSrcUrl);
     };
   }, [pdfSrcUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (result?.url) URL.revokeObjectURL(result.url);
+    };
+  }, [result?.url]);
+
+  useEffect(() => {
+    if (!result?.url) return;
+    URL.revokeObjectURL(result.url);
+    setResult(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileUploaded?.id, JSON.stringify(pages)]);
 
   // Load page count when file is uploaded
   useEffect(() => {
@@ -393,23 +414,33 @@ export function PageClient() {
               Reset Changes
             </Button>
           )}
-          <Button
-            onClick={handleApplyChanges}
-            disabled={isProcessing || !hasChanges}
-            size="sm"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2Icon className="w-4 h-4 animate-spin mr-2" />
-                Processing...
-              </>
-            ) : (
-              <>
-                Apply Changes
-                <ArrowRightIcon className="w-4 h-4 ml-2" />
-              </>
-            )}
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            Start Over
           </Button>
+          {result ? (
+            <Button onClick={handleDownload} size="sm">
+              <DownloadIcon className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Download</span>
+            </Button>
+          ) : (
+            <Button
+              onClick={handleApplyChanges}
+              disabled={isProcessing || !hasChanges}
+              size="sm"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2Icon className="w-4 h-4 animate-spin mr-2" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Apply Changes
+                  <ArrowRightIcon className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 

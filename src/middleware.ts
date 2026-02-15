@@ -10,5 +10,14 @@ export function middleware(request: NextRequest) {
 
   url.searchParams.set("viewport", viewport);
 
-  return NextResponse.rewrite(url);
+  const response = NextResponse.rewrite(url);
+
+  // Enable SharedArrayBuffer for wasm-vips multi-threading.
+  // "credentialless" allows cross-origin resources (e.g. Buy Me a Coffee script)
+  // without requiring them to set Cross-Origin-Resource-Policy headers.
+  response.headers.set("Cross-Origin-Embedder-Policy", "credentialless");
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  response.headers.set("Service-Worker-Allowed", "/");
+
+  return response;
 }

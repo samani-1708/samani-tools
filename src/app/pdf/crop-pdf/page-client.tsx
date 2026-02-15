@@ -18,6 +18,8 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CropIcon,
+  DownloadIcon,
+  RotateCcwIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -89,6 +91,7 @@ export function PageClient() {
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [cropStart, setCropStart] = useState<CropState>(presets['10p']);
+  const [result, setResult] = useState<{ url: string; filename: string } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -134,8 +137,7 @@ export function PageClient() {
 
       const url = createPDFBlobURL(croppedBytes);
       const originalName = fileUploaded.name.replace(/\.pdf$/i, "");
-      downloadLink(url, `${originalName}-cropped.pdf`);
-      URL.revokeObjectURL(url);
+      setResult({ url, filename: `${originalName}-cropped.pdf` });
 
       toast.success("PDF cropped successfully!");
     } catch (error) {
@@ -147,11 +149,18 @@ export function PageClient() {
   };
 
   const handleReset = () => {
+    if (result?.url) URL.revokeObjectURL(result.url);
+    setResult(null);
     setCrop(presets['10p']);
     resetInput();
     setTotalPages(0);
     setCurrentPage(0);
     setPageDimensions([]);
+  };
+
+  const handleDownload = () => {
+    if (!result) return;
+    downloadLink(result.url, result.filename);
   };
 
   // Mouse event handlers for crop box manipulation
@@ -271,6 +280,19 @@ export function PageClient() {
       };
     }
   }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
+
+  useEffect(() => {
+    return () => {
+      if (result?.url) URL.revokeObjectURL(result.url);
+    };
+  }, [result?.url]);
+
+  useEffect(() => {
+    if (!result?.url) return;
+    URL.revokeObjectURL(result.url);
+    setResult(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileUploaded?.id, applyMode, currentPage, crop.x, crop.y, crop.width, crop.height]);
 
   return (
     <PDFToolLayout
@@ -563,19 +585,27 @@ export function PageClient() {
         </div>
       }
       actions={
-        <ProcessingButton
-          onClick={handleCrop}
-          disabled={!canCrop}
-          isProcessing={isCropping}
-          label="Crop PDF"
-          processingLabel="Cropping..."
-          icon={<CropIcon className="w-5 h-5 mr-2" />}
-        />
+        result ? (
+          <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download cropped PDF">
+            <DownloadIcon className="w-5 h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Download</span>
+          </Button>
+        ) : (
+          <ProcessingButton
+            onClick={handleCrop}
+            disabled={!canCrop}
+            isProcessing={isCropping}
+            label="Crop PDF"
+            processingLabel="Cropping..."
+            icon={<CropIcon className="w-5 h-5" />}
+          />
+        )
       }
       secondaryActions={
         <>
-          <Button variant="outline" onClick={handleReset} className="w-full">
-            Start Over
+          <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
+            <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Start Over</span>
           </Button>
           {!isLoaded && (
             <p className="text-xs text-muted-foreground text-center mt-2">

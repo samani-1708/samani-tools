@@ -2,12 +2,13 @@
 
 import { FileUploaded, useFileUpload } from "@/app/common/hooks";
 import { PDFStatePending } from "@/app/common/pdf-viewer/pdf-states";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { EyeIcon, EyeOffIcon, LockIcon } from "lucide-react";
+import { DownloadIcon, EyeIcon, EyeOffIcon, LockIcon, RotateCcwIcon } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { usePDFUtils } from "../common/use-pdf-utils.hooks";
 import { downloadLink } from "@/app/common/utils";
@@ -45,6 +46,7 @@ export function PageClient() {
   const [encryptionMode, setEncryptionMode] = useState<EncryptionMode>("aes");
   const [keyLength, setKeyLength] = useState<WasmKeyLength>(128);
   const [permissions, setPermissions] = useState<EncryptionPermissions>("none");
+  const [result, setResult] = useState<{ url: string; filename: string } | null>(null);
 
   const fileUploaded: FileUploaded | null = files?.[0] || null;
 
@@ -69,12 +71,11 @@ export function PageClient() {
         permissions,
       });
 
-      const blob = new Blob([encryptedBytes], { type: "application/pdf" });
+      const blob = new Blob([encryptedBytes as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      downloadLink(url, `locked-${fileUploaded.name}`);
+      setResult({ url, filename: `locked-${fileUploaded.name}` });
 
       toast.success("PDF locked successfully!");
-      handleReset();
     } catch (error) {
       console.error(error);
       toast.error("Failed to lock PDF");
@@ -84,10 +85,30 @@ export function PageClient() {
   }
 
   function handleReset() {
+    if (result?.url) URL.revokeObjectURL(result.url);
+    setResult(null);
     resetInput();
     setOwnerPassword("");
     setUserPassword("");
   }
+
+  function handleDownload() {
+    if (!result) return;
+    downloadLink(result.url, result.filename);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (result?.url) URL.revokeObjectURL(result.url);
+    };
+  }, [result?.url]);
+
+  useEffect(() => {
+    if (!result?.url) return;
+    URL.revokeObjectURL(result.url);
+    setResult(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileUploaded?.id, ownerPassword, userPassword, encryptionMode, keyLength, permissions]);
 
   return (
     <PDFToolLayout
@@ -234,13 +255,26 @@ export function PageClient() {
         </form>
       }
       actions={
-        <ProcessingButton
-          onClick={handleApplyLock}
-          disabled={!ownerPassword}
-          isProcessing={isProcessing}
-          label="Lock PDF"
-          processingLabel="Locking..."
-        />
+        result ? (
+          <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download locked PDF">
+            <DownloadIcon className="w-5 h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Download</span>
+          </Button>
+        ) : (
+          <ProcessingButton
+            onClick={handleApplyLock}
+            disabled={!ownerPassword}
+            isProcessing={isProcessing}
+            label="Lock PDF"
+            processingLabel="Locking..."
+          />
+        )
+      }
+      secondaryActions={
+        <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
+          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Start Over</span>
+        </Button>
       }
     />
   );

@@ -4,8 +4,8 @@ import { FileUploaded, useFileUpload } from "@/app/common/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EyeIcon, EyeOffIcon, UnlockIcon } from "lucide-react";
-import { useState } from "react";
+import { DownloadIcon, EyeIcon, EyeOffIcon, RotateCcwIcon, UnlockIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { usePDFUtils } from "../common/use-pdf-utils.hooks";
 import { downloadLink } from "@/app/common/utils";
@@ -29,6 +29,7 @@ export function PageClient() {
   // Password settings
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [result, setResult] = useState<{ url: string; filename: string } | null>(null);
 
   const fileUploaded: FileUploaded | null = files?.[0] || null;
 
@@ -52,10 +53,9 @@ export function PageClient() {
 
       const blob = new Blob([decryptedBytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      downloadLink(url, `unlocked-${fileUploaded.name}`);
+      setResult({ url, filename: `unlocked-${fileUploaded.name}` });
 
       toast.success("PDF unlocked successfully!");
-      handleReset();
     } catch (error) {
       console.error(error);
       toast.error("Failed to unlock PDF. Please check the password.");
@@ -65,9 +65,29 @@ export function PageClient() {
   }
 
   function handleReset() {
+    if (result?.url) URL.revokeObjectURL(result.url);
+    setResult(null);
     resetInput();
     setPassword("");
   }
+
+  function handleDownload() {
+    if (!result) return;
+    downloadLink(result.url, result.filename);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (result?.url) URL.revokeObjectURL(result.url);
+    };
+  }, [result?.url]);
+
+  useEffect(() => {
+    if (!result?.url) return;
+    URL.revokeObjectURL(result.url);
+    setResult(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileUploaded?.id, password]);
 
   return (
     <PDFToolLayout
@@ -147,13 +167,26 @@ export function PageClient() {
         </>
       }
       actions={
-        <ProcessingButton
-          onClick={handleApplyUnlock}
-          disabled={!password}
-          isProcessing={isProcessing}
-          label="Unlock PDF"
-          processingLabel="Unlocking..."
-        />
+        result ? (
+          <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download unlocked PDF">
+            <DownloadIcon className="w-5 h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Download</span>
+          </Button>
+        ) : (
+          <ProcessingButton
+            onClick={handleApplyUnlock}
+            disabled={!password}
+            isProcessing={isProcessing}
+            label="Unlock PDF"
+            processingLabel="Unlocking..."
+          />
+        )
+      }
+      secondaryActions={
+        <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
+          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Start Over</span>
+        </Button>
       }
     />
   );

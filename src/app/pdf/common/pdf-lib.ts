@@ -72,9 +72,9 @@ export default class PDFUtils implements IPdfUtilsLib {
     }
 
     // Create worker and proxy it
-    const WorkerClass = await (window.Comlink as typeof import("comlink")).proxy(
+    const WorkerClass = await ((window.Comlink as typeof import("comlink")).proxy(
       new Worker("/js/pdflib/worker.js")
-    ) as new () => Promise<PDFLibWorkerInstance>;
+    ) as unknown as new () => Promise<PDFLibWorkerInstance>);
 
     this._workerInstance = await new WorkerClass();
     console.log("PDF-Lib Worker initialized");

@@ -62,7 +62,12 @@ export default function RootLayout(props: RootLayoutProps) {
         </main>
 
         <SiteFooter />
-
+        {/* Register service worker for WASM/JS asset precaching */}
+        <Script id="sw-register" strategy="afterInteractive">{`
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw-asset-cache.js').catch(function() {});
+          }
+        `}</Script>
         {/* buy me a coffee: floating widget */}
         <Script
           type="text/javascript"
