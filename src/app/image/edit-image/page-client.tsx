@@ -2,7 +2,7 @@
 
 import { UploadButtonFull } from "@/app/common/upload";
 import { useFileUpload } from "@/app/common/hooks";
-import { Button } from "@/components/ui/button";
+import { filterImageFiles } from "@/app/image/common/filter-image-files";
 import dynamic from "next/dynamic";
 import { ImagePlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -112,21 +112,18 @@ async function toBlob(savedImageData: SavedImageData): Promise<Blob> {
 }
 
 export function PageClient() {
-  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } =
-    useFileUpload((f) =>
-      Array.from(f).filter((file) => {
-        if (file.type.startsWith("image/")) return true;
-        const lower = file.name.toLowerCase();
-        return lower.endsWith(".heic") || lower.endsWith(".heif");
-      }),
-    );
+  // 1) Props
+  // No props for this page component.
 
-  const file = files[0]?.file;
-
-  const [result, setResult] = useState<{ blob: Blob; name: string } | null>(null);
+  // 2) State
   const [editorTheme, setEditorTheme] = useState<EditorTheme>(DEFAULT_EDITOR_THEME);
   const [hasEditorChanges, setHasEditorChanges] = useState(false);
 
+  // 3) Custom hooks
+  const { files, fileInputRef, handleFileUpload, triggerFileInput } = useFileUpload(filterImageFiles);
+
+  // 4) Derived props and state
+  const file = files[0]?.file;
   const defaultName = useMemo(() => {
     if (!file) return "edited-image";
     return `${getBaseName(file.name)}-edited`;
@@ -144,6 +141,10 @@ export function PageClient() {
     return Math.min(3, Math.max(1, window.devicePixelRatio || 1));
   }, []);
 
+  // 5) Utils
+  // No local utility helpers needed.
+
+  // 6) Handlers
   const handleSave = useCallback(async (savedImageData: SavedImageData) => {
     try {
       const ext = savedImageData.extension || "png";
@@ -155,16 +156,12 @@ export function PageClient() {
 
       if (!hasEditorChanges && file && normalizedSourceExt === normalizedOutputExt) {
         const originalBlob = file.slice(0, file.size, file.type || undefined);
-        setResult({ blob: originalBlob, name: outputName });
         downloadBlob(originalBlob, outputName);
         toast.success("No edits detected, downloaded original image");
         return;
       }
 
       const blob = await toBlob(savedImageData);
-
-      setResult({ blob, name: outputName });
-
       downloadBlob(blob, outputName);
       toast.success("Image edited and downloaded");
     } catch (error) {
@@ -173,13 +170,8 @@ export function PageClient() {
     }
   }, [defaultName, file, hasEditorChanges]);
 
-  function handleNewImage() {
-    setResult(null);
-    resetInput();
-  }
-
+  // 7) Effects
   useEffect(() => {
-    setResult(null);
     setHasEditorChanges(false);
   }, [file]);
 
@@ -235,6 +227,7 @@ export function PageClient() {
     });
   }, []);
 
+  // 8) Render
   if (!file) {
     return (
       <div className="h-full flex items-center justify-center p-4">
@@ -285,7 +278,7 @@ export function PageClient() {
               }}
               
               Text={{
-                text: "samani.in",
+                text: "thesamani.com",
                 fontSize: 28,
                 fill: "#111827",
               }}

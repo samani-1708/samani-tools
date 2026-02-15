@@ -4,15 +4,15 @@ import { type MetadataRoute } from "next";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: "https://samani.in/",
+      url: "https://thesamani.com/",
       lastModified: new Date(),
     },
     {
-      url: "https://samani.in/pdf",
+      url: "https://thesamani.com/pdf",
       lastModified: new Date(),
     },
     {
-      url: "https://samani.in/image",
+      url: "https://thesamani.com/image",
       lastModified: new Date(),
     },
   ];

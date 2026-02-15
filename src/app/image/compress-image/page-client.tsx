@@ -1,6 +1,7 @@
 "use client";
 
 import { useFileUpload } from "@/app/common/hooks";
+import { filterImageFiles } from "@/app/image/common/filter-image-files";
 import { useImageUtils } from "@/app/image/common/use-image-utils.hooks";
 import { PDFToolLayout } from "@/app/pdf/common/layouts/pdf-tool-layout";
 import { ProcessingButton } from "@/app/pdf/common/layouts/processing-button";
@@ -33,31 +34,32 @@ const sizeOptions = [
 ];
 
 export function PageClient() {
-  const [isLoaded, imageUtils] = useImageUtils();
-  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } =
-    useFileUpload((f) =>
-      Array.from(f).filter((file) => {
-        if (file.type.startsWith("image/")) return true;
-        const lower = file.name.toLowerCase();
-        return lower.endsWith(".heic") || lower.endsWith(".heif");
-      }),
-    );
+  // 1) Props
+  // No props for this page component.
 
-  const file = files[0]?.file ?? null;
-  const originalSize = file?.size ?? 0;
-
+  // 2) State
   const [quality, setQuality] = useState(80);
   const [maxSize, setMaxSize] = useState("1920");
   const [isCompressing, setIsCompressing] = useState(false);
   const [result, setResult] = useState<{ blob: Blob; size: number; format: EncodableImageFormat; timeMs: number } | null>(null);
 
-  const canCompress = Boolean(file) && !isCompressing && isLoaded;
+  // 3) Custom hooks
+  const [isLoaded, imageUtils] = useImageUtils();
+  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } = useFileUpload(filterImageFiles);
 
+  // 4) Derived props and state
+  const file = files[0]?.file ?? null;
+  const originalSize = file?.size ?? 0;
+  const canCompress = Boolean(file) && !isCompressing && isLoaded;
   const compressionRatio =
     result && originalSize > 0
       ? (((originalSize - result.size) / originalSize) * 100).toFixed(1)
       : null;
 
+  // 5) Utils
+  // No local utility helpers needed.
+
+  // 6) Handlers
   async function handleCompress() {
     if (!file || isCompressing) return;
 
@@ -100,11 +102,13 @@ export function PageClient() {
     downloadBlob(result.blob, `${getBaseName(file.name)}-compressed.${ext}`);
   }
 
+  // 7) Effects
   useEffect(() => {
     if (!result) return;
     setResult(null);
   }, [quality, maxSize, file]);
 
+  // 8) Render
   return (
     <PDFToolLayout
       showUpload={files.length === 0}

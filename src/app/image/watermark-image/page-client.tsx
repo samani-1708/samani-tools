@@ -1,6 +1,7 @@
 "use client";
 
 import { useFileUpload } from "@/app/common/hooks";
+import { filterImageFiles } from "@/app/image/common/filter-image-files";
 import { useImageUtils } from "@/app/image/common/use-image-utils.hooks";
 import { PDFToolLayout } from "@/app/pdf/common/layouts/pdf-tool-layout";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import {
   PlusIcon,
   RotateCcwIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   EncodableImageFormat,
@@ -105,19 +106,23 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
 }
 
-export function PageClient() {
-  const [isLoaded, imageUtils] = useImageUtils();
-  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } =
-    useFileUpload((f) =>
-      Array.from(f).filter((file) => {
-        if (file.type.startsWith("image/")) return true;
-        const lower = file.name.toLowerCase();
-        return lower.endsWith(".heic") || lower.endsWith(".heif");
-      }),
-    );
+function useDebouncedValue<T>(value: T, delayMs = 100): T {
+  const [debounced, setDebounced] = useState(value);
 
-  const file = files[0]?.file;
-  const [text, setText] = useState("samani.in");
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(timeout);
+  }, [value, delayMs]);
+
+  return debounced;
+}
+
+export function PageClient() {
+  // 1) Props
+  // No props for this page component.
+
+  // 2) State
+  const [text, setText] = useState("thesamani.com");
   const [fontSize, setFontSize] = useState(36);
   const [opacity, setOpacity] = useState(100);
   const [color, setColor] = useState("#ffffff");
@@ -126,123 +131,98 @@ export function PageClient() {
   const [quality, setQuality] = useState(80);
   const [isDownloading, setIsDownloading] = useState(false);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
-
   const canvasWrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // 3) Custom hooks
+  const [isLoaded, imageUtils] = useImageUtils();
+  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } = useFileUpload(filterImageFiles);
+
+  // 4) Derived props and state
+  const file = files[0]?.file;
   const format = useMemo(() => getOutputFormat(file?.type), [file?.type]);
   const showQuality = format !== "image/png" && format !== "image/tiff";
   const isBusy = isDownloading;
+  const debouncedPreview = useDebouncedValue(
+    { text, fontSize, opacity, color, position, rotation },
+    80,
+  );
 
-  useEffect(() => {
-    if (!file) {
-      setImageElement(null);
-      return;
-    }
-    const img = new Image();
-    img.onload = () => setImageElement(img);
-    img.src = files[0].url;
-  }, [file, files]);
-
-  useEffect(() => {
-    if (!file || !isLoaded) return;
-    let ignore = false;
-
-    (async () => {
-      try {
-        const dims = await imageUtils.readDimensions(file);
-        if (!ignore) setFontSize(getAutoFontSize(dims.width, dims.height));
-      } catch (error) {
-        console.error(error);
-      }
-    })();
-
-    return () => {
-      ignore = true;
-    };
-  }, [file, isLoaded, imageUtils]);
-
-  useEffect(() => {
+  // 5) Utils
+  const drawPreview = useCallback(() => {
     if (!imageElement || !canvasRef.current || !canvasWrapRef.current) return;
 
-    const draw = () => {
-      const canvas = canvasRef.current;
-      const wrap = canvasWrapRef.current;
-      if (!canvas || !wrap) return;
+    const canvas = canvasRef.current;
+    const wrap = canvasWrapRef.current;
+    const maxWidth = Math.max(1, Math.floor(wrap.clientWidth));
+    const ratio = imageElement.naturalWidth / imageElement.naturalHeight;
+    const drawWidth = maxWidth;
+    const drawHeight = Math.max(1, Math.round(drawWidth / ratio));
+    const dpr = window.devicePixelRatio || 1;
 
-      const maxWidth = Math.max(1, Math.floor(wrap.clientWidth));
-      const ratio = imageElement.naturalWidth / imageElement.naturalHeight;
-      const drawWidth = maxWidth;
-      const drawHeight = Math.max(1, Math.round(drawWidth / ratio));
-      const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(drawWidth * dpr));
+    canvas.height = Math.max(1, Math.round(drawHeight * dpr));
+    canvas.style.width = `${drawWidth}px`;
+    canvas.style.height = `${drawHeight}px`;
 
-      canvas.width = Math.max(1, Math.round(drawWidth * dpr));
-      canvas.height = Math.max(1, Math.round(drawHeight * dpr));
-      canvas.style.width = `${drawWidth}px`;
-      canvas.style.height = `${drawHeight}px`;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, drawWidth, drawHeight);
+    ctx.drawImage(imageElement, 0, 0, drawWidth, drawHeight);
 
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, drawWidth, drawHeight);
-      ctx.drawImage(imageElement, 0, 0, drawWidth, drawHeight);
+    const scale = drawWidth / imageElement.naturalWidth;
+    const size = Math.max(10, debouncedPreview.fontSize * scale);
+    const margin = Math.max(8, Math.round(size * 0.6));
+    const textColor = hexToRgba(debouncedPreview.color, debouncedPreview.opacity / 100);
+    const angle = (debouncedPreview.rotation * Math.PI) / 180;
 
-      const scale = drawWidth / imageElement.naturalWidth;
-      const size = Math.max(10, fontSize * scale);
-      const margin = Math.max(8, Math.round(size * 0.6));
-      const textColor = hexToRgba(color, opacity / 100);
-      const angle = (rotation * Math.PI) / 180;
+    ctx.font = `${Math.round(size)}px sans-serif`;
+    ctx.textBaseline = "top";
+    ctx.fillStyle = textColor;
 
-      ctx.font = `${Math.round(size)}px sans-serif`;
-      ctx.textBaseline = "top";
-      ctx.fillStyle = textColor;
+    const textWidth = ctx.measureText(debouncedPreview.text).width;
+    const textHeight = size * 1.2;
 
-      const textWidth = ctx.measureText(text).width;
-      const textHeight = size * 1.2;
-
-      const drawText = (x: number, y: number) => {
-        ctx.save();
-        if (rotation !== 0) {
-          ctx.translate(x + textWidth / 2, y + textHeight / 2);
-          ctx.rotate(angle);
-          ctx.fillText(text, -textWidth / 2, -textHeight / 2);
-        } else {
-          ctx.fillText(text, x, y);
-        }
-        ctx.restore();
-      };
-
-      if (position === "mosaic") {
-        const tileW = drawWidth / 3;
-        const tileH = drawHeight / 3;
-        for (let row = 0; row < 3; row += 1) {
-          for (let col = 0; col < 3; col += 1) {
-            const centerX = col * tileW + tileW / 2;
-            const centerY = row * tileH + tileH / 2;
-            drawText(centerX - textWidth / 2, centerY - textHeight / 2);
-          }
-        }
-        return;
+    const drawText = (x: number, y: number) => {
+      ctx.save();
+      if (debouncedPreview.rotation !== 0) {
+        ctx.translate(x + textWidth / 2, y + textHeight / 2);
+        ctx.rotate(angle);
+        ctx.fillText(debouncedPreview.text, -textWidth / 2, -textHeight / 2);
+      } else {
+        ctx.fillText(debouncedPreview.text, x, y);
       }
-
-      let x = margin;
-      let y = margin;
-      if (position.includes("center")) x = (drawWidth - textWidth) / 2;
-      if (position.includes("right")) x = drawWidth - textWidth - margin;
-      if (position.includes("middle") || position === "center") y = (drawHeight - textHeight) / 2;
-      if (position.includes("bottom")) y = drawHeight - textHeight - margin;
-
-      drawText(x, y);
+      ctx.restore();
     };
 
-    draw();
-    window.addEventListener("resize", draw);
-    return () => {
-      window.removeEventListener("resize", draw);
-    };
-  }, [imageElement, text, fontSize, color, opacity, position, rotation]);
+    if (debouncedPreview.position === "mosaic") {
+      const tileW = drawWidth / 3;
+      const tileH = drawHeight / 3;
+      for (let row = 0; row < 3; row += 1) {
+        for (let col = 0; col < 3; col += 1) {
+          const centerX = col * tileW + tileW / 2;
+          const centerY = row * tileH + tileH / 2;
+          drawText(centerX - textWidth / 2, centerY - textHeight / 2);
+        }
+      }
+      return;
+    }
 
+    let x = margin;
+    let y = margin;
+    if (debouncedPreview.position.includes("center")) x = (drawWidth - textWidth) / 2;
+    if (debouncedPreview.position.includes("right")) x = drawWidth - textWidth - margin;
+    if (debouncedPreview.position.includes("middle") || debouncedPreview.position === "center") {
+      y = (drawHeight - textHeight) / 2;
+    }
+    if (debouncedPreview.position.includes("bottom")) y = drawHeight - textHeight - margin;
+
+    drawText(x, y);
+  }, [debouncedPreview, imageElement]);
+
+  // 6) Handlers
   function handleRotateBy(degrees: number) {
     setRotation((prev) => Math.max(-180, Math.min(180, prev + degrees)));
   }
@@ -279,6 +259,54 @@ export function PageClient() {
     resetInput();
   }
 
+  // 7) Effects
+  useEffect(() => {
+    if (!file) {
+      setImageElement(null);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => setImageElement(img);
+    img.src = files[0].url;
+  }, [file, files]);
+
+  useEffect(() => {
+    if (!file || !isLoaded) return;
+    let ignore = false;
+
+    (async () => {
+      try {
+        const dims = await imageUtils.readDimensions(file);
+        if (!ignore) setFontSize(getAutoFontSize(dims.width, dims.height));
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [file, isLoaded, imageUtils]);
+
+  useEffect(() => {
+    drawPreview();
+  }, [drawPreview]);
+
+  useEffect(() => {
+    const wrap = canvasWrapRef.current;
+    if (!wrap) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      window.requestAnimationFrame(drawPreview);
+    });
+    resizeObserver.observe(wrap);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [drawPreview]);
+
+  // 8) Render
   return (
     <PDFToolLayout
       showUpload={files.length === 0}

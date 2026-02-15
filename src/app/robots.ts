@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*", // applies to all crawlers
       allow: "/",     // allow crawling everything
     },
-    sitemap: "https://samani.in/sitemap.xml",
-    host: "https://samani.in",
+    sitemap: "https://thesamani.com/sitemap.xml",
+    host: "https://thesamani.com",
   };
 }

@@ -1,6 +1,7 @@
 import { expose, transfer } from "comlink";
 
 type EncodableImageFormat = "image/png" | "image/jpeg" | "image/webp" | "image/avif" | "image/tiff";
+type ConversionMode = "fast" | "balanced" | "max_quality";
 type ImageWatermarkPosition =
   | "top-left"
   | "top-center"
@@ -24,6 +25,7 @@ interface ConvertImageOptions {
   quality?: number;
   sizeSafe?: boolean;
   maxSizeMultiplier?: number;
+  mode?: ConversionMode;
 }
 
 interface CompressImageOptions {
@@ -242,6 +244,76 @@ function defaultQualityForFormat(format: EncodableImageFormat): number | undefin
   }
 }
 
+type ConversionPolicy = {
+  sizeSafe: boolean;
+  maxSizeMultiplier: number;
+  pngMaxPixels: number;
+  avifMaxPixels: number;
+  tiffMaxPixels: number;
+  defaultQuality: {
+    jpeg: number;
+    webp: number;
+    avif: number;
+  };
+};
+
+function buildConversionPolicy(
+  mode: ConversionMode,
+  options: ConvertImageOptions,
+): ConversionPolicy {
+  const byMode: Record<ConversionMode, ConversionPolicy> = {
+    fast: {
+      sizeSafe: true,
+      maxSizeMultiplier: 1.5,
+      pngMaxPixels: 10_000_000,
+      avifMaxPixels: 5_500_000,
+      tiffMaxPixels: 8_000_000,
+      defaultQuality: { jpeg: 0.8, webp: 0.78, avif: 0.58 },
+    },
+    balanced: {
+      sizeSafe: true,
+      maxSizeMultiplier: 1.75,
+      pngMaxPixels: 16_000_000,
+      avifMaxPixels: 8_000_000,
+      tiffMaxPixels: 10_000_000,
+      defaultQuality: { jpeg: 0.86, webp: 0.84, avif: 0.7 },
+    },
+    max_quality: {
+      sizeSafe: false,
+      maxSizeMultiplier: 8,
+      pngMaxPixels: 40_000_000,
+      avifMaxPixels: 16_000_000,
+      tiffMaxPixels: 22_000_000,
+      defaultQuality: { jpeg: 0.94, webp: 0.92, avif: 0.84 },
+    },
+  };
+
+  const base = byMode[mode];
+  return {
+    ...base,
+    sizeSafe: options.sizeSafe ?? base.sizeSafe,
+    maxSizeMultiplier: options.maxSizeMultiplier ?? base.maxSizeMultiplier,
+  };
+}
+
+function defaultQualityForMode(
+  format: EncodableImageFormat,
+  mode: ConversionMode,
+): number | undefined {
+  const fallback = defaultQualityForFormat(format);
+  const policy = buildConversionPolicy(mode, { format });
+  switch (format) {
+    case "image/jpeg":
+      return policy.defaultQuality.jpeg;
+    case "image/webp":
+      return policy.defaultQuality.webp;
+    case "image/avif":
+      return policy.defaultQuality.avif;
+    default:
+      return fallback;
+  }
+}
+
 function isLossyFormat(format: EncodableImageFormat): boolean {
   return format === "image/jpeg" || format === "image/webp" || format === "image/avif";
 }
@@ -283,8 +355,13 @@ async function encodeViaCanvas(
       type: targetMime,
       quality: quality == null ? undefined : Math.max(0.1, Math.min(1, quality)),
     });
+    // Browsers may silently fall back to PNG when an encoder is unsupported.
+    // Avoid returning mismatched bytes under an incorrect MIME.
+    if (outBlob.type && outBlob.type !== targetMime) {
+      return null;
+    }
     const outBuffer = await outBlob.arrayBuffer();
-    return { buffer: outBuffer, mime: targetMime };
+    return { buffer: outBuffer, mime: outBlob.type || targetMime };
   } catch {
     return null;
   }
@@ -322,15 +399,6 @@ function hexToRgb(hex: string): [number, number, number] {
     return [((num >> 8) & 0xf) * 17, ((num >> 4) & 0xf) * 17, (num & 0xf) * 17];
   }
   return [(num >> 16) & 0xff, (num >> 8) & 0xff, num & 0xff];
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
 }
 
 // Some inputs are mislabeled by browsers/upload pipelines.
@@ -376,6 +444,57 @@ async function renderTextOverlayBuffer(options: WatermarkTextOptions): Promise<U
   return new Uint8Array(await blob.arrayBuffer());
 }
 
+async function createProbeInput(): Promise<WorkerImageInput> {
+  const canvas = new OffscreenCanvas(8, 8);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Canvas is unavailable for probing format support");
+  }
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(0, 0, 8, 8);
+  const blob = await canvas.convertToBlob({ type: "image/png" });
+  return {
+    name: "probe.png",
+    type: "image/png",
+    buffer: await blob.arrayBuffer(),
+  };
+}
+
+async function probeEncodeSupport(): Promise<Record<EncodableImageFormat, boolean>> {
+  const probe = await createProbeInput();
+  const support: Record<EncodableImageFormat, boolean> = {
+    "image/png": false,
+    "image/jpeg": false,
+    "image/webp": false,
+    "image/avif": false,
+    "image/tiff": false,
+  };
+
+  const canvasTargets: Array<"image/png" | "image/jpeg" | "image/webp" | "image/avif"> = [
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/avif",
+  ];
+
+  for (const target of canvasTargets) {
+    const out = await encodeViaCanvas(probe, target, 0.7, 64 * 64);
+    support[target] = Boolean(out);
+  }
+
+  try {
+    const vips = await getVips(false);
+    const img = vips.Image.newFromBuffer(probe.buffer);
+    const out = writeImage(img, "image/tiff");
+    img.delete();
+    support["image/tiff"] = out.buffer.byteLength > 0;
+  } catch {
+    support["image/tiff"] = false;
+  }
+
+  return support;
+}
+
 // ---------------------------------------------------------------------------
 // Public API (exposed via Comlink)
 // ---------------------------------------------------------------------------
@@ -390,13 +509,7 @@ const api = {
   },
 
   async getEncodeSupport(): Promise<Record<EncodableImageFormat, boolean>> {
-    return {
-      "image/png": true,
-      "image/jpeg": true,
-      "image/webp": true,
-      "image/avif": true,
-      "image/tiff": true,
-    };
+    return probeEncodeSupport();
   },
 
   async readDimensions(file: WorkerImageInput): Promise<{ width: number; height: number }> {
@@ -413,18 +526,20 @@ const api = {
   },
 
   async convert(file: WorkerImageInput, options: ConvertImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const sizeSafe = options.sizeSafe ?? true;
-    const maxSizeMultiplier = options.maxSizeMultiplier ?? 1.75;
+    const mode: ConversionMode = options.mode ?? "balanced";
+    const policy = buildConversionPolicy(mode, options);
+    const sizeSafe = policy.sizeSafe;
+    const maxSizeMultiplier = policy.maxSizeMultiplier;
     const targetThreshold = Math.round(file.buffer.byteLength * maxSizeMultiplier);
-    const selectedQuality = options.quality ?? defaultQualityForFormat(options.format);
+    const selectedQuality = options.quality ?? defaultQualityForMode(options.format, mode);
 
     // Fast path for common browser-decodable inputs to PNG.
     // This is significantly faster than vips for large JPG->PNG conversions in browser workers.
     if (options.format === "image/png") {
-      const fastPng = await encodeViaCanvas(file, "image/png", undefined, sizeSafe ? 16_000_000 : undefined);
+      const fastPng = await encodeViaCanvas(file, "image/png", undefined, sizeSafe ? policy.pngMaxPixels : undefined);
       if (fastPng) {
         if (sizeSafe && fastPng.buffer.byteLength > targetThreshold) {
-          const tighter = await encodeViaCanvas(file, "image/png", undefined, 10_000_000);
+          const tighter = await encodeViaCanvas(file, "image/png", undefined, policy.pngMaxPixels);
           if (tighter) return transfer(tighter, [tighter.buffer]);
         }
         return transfer(fastPng, [fastPng.buffer]);
@@ -437,13 +552,13 @@ const api = {
         file,
         "image/avif",
         selectedQuality ?? 0.62,
-        sizeSafe ? 8_000_000 : undefined,
+        sizeSafe ? policy.avifMaxPixels : undefined,
       );
       if (fastAvif) {
         if (!sizeSafe || fastAvif.buffer.byteLength <= targetThreshold) {
           return transfer(fastAvif, [fastAvif.buffer]);
         }
-        const tighter = await encodeViaCanvas(file, "image/avif", 0.5, 6_000_000);
+        const tighter = await encodeViaCanvas(file, "image/avif", 0.5, Math.round(policy.avifMaxPixels * 0.75));
         if (tighter) return transfer(tighter, [tighter.buffer]);
       }
     }
@@ -457,7 +572,7 @@ const api = {
       isLossyMime(file.type || "")
     ) {
       const pixels = img.width * img.height;
-      const maxPixels = 14_000_000;
+      const maxPixels = policy.pngMaxPixels;
       if (pixels > maxPixels) {
         const scale = Math.sqrt(maxPixels / pixels);
         const resized = img.resize(scale, { kernel: "lanczos3" });
@@ -468,7 +583,7 @@ const api = {
 
     if (sizeSafe && options.format === "image/avif") {
       const pixels = img.width * img.height;
-      const maxPixels = 8_000_000;
+      const maxPixels = policy.avifMaxPixels;
       if (pixels > maxPixels) {
         const scale = Math.sqrt(maxPixels / pixels);
         const resized = img.resize(scale, { kernel: "lanczos3" });
@@ -479,7 +594,7 @@ const api = {
 
     if (sizeSafe && options.format === "image/tiff") {
       const pixels = img.width * img.height;
-      const maxPixels = 10_000_000;
+      const maxPixels = policy.tiffMaxPixels;
       if (pixels > maxPixels) {
         const scale = Math.sqrt(maxPixels / pixels);
         const resized = img.resize(scale, { kernel: "lanczos3" });

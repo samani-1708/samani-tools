@@ -1,6 +1,7 @@
 "use client";
 
 import { useFileUpload } from "@/app/common/hooks";
+import { filterImageFiles } from "@/app/image/common/filter-image-files";
 import { useImageUtils } from "@/app/image/common/use-image-utils.hooks";
 import { PDFToolLayout } from "@/app/pdf/common/layouts/pdf-tool-layout";
 import { ProcessingButton } from "@/app/pdf/common/layouts/processing-button";
@@ -27,8 +28,10 @@ function clampDim(value: number): number {
 }
 
 export function PageClient() {
-  const accept = "image/*,.heic,.heif";
+  // 1) Props
+  // No props for this page component.
 
+  // 2) State
   const [isProcessing, setIsProcessing] = useState(false);
   const [keepAspectRatio, setKeepAspectRatio] = useState(true);
   const [originalWidth, setOriginalWidth] = useState(0);
@@ -40,20 +43,20 @@ export function PageClient() {
   const [quality, setQuality] = useState(80);
   const [result, setResult] = useState<{ blob: Blob; url: string; format: EncodableImageFormat } | null>(null);
 
+  // 3) Custom hooks
   const [isLoaded, imageUtils] = useImageUtils();
-  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } =
-    useFileUpload((f) =>
-      Array.from(f).filter((file) => {
-        if (file.type.startsWith("image/")) return true;
-        const lower = file.name.toLowerCase();
-        return lower.endsWith(".heic") || lower.endsWith(".heif");
-      }),
-    );
+  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } = useFileUpload(filterImageFiles);
 
+  // 4) Derived props and state
+  const accept = "image/*,.heic,.heif";
   const file = files[0]?.file;
   const isPng = file?.type === "image/png";
   const canResize = Boolean(file) && width > 0 && height > 0 && isLoaded && !isProcessing;
 
+  // 5) Utils
+  // No local utility helpers needed.
+
+  // 6) Handlers
   function onWidthChange(nextWidth: number) {
     const safe = clampDim(nextWidth || 1);
     setWidth(safe);
@@ -133,6 +136,7 @@ export function PageClient() {
     resetInput();
   }
 
+  // 7) Effects
   useEffect(() => {
     async function loadDimensions() {
       if (!file) return;
@@ -165,6 +169,7 @@ export function PageClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width, height, percentage, mode, keepAspectRatio, quality, file]);
 
+  // 8) Render
   return (
     <PDFToolLayout
       showUpload={files.length === 0}

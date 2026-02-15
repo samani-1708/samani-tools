@@ -2,6 +2,7 @@
 
 import { UploadButtonFull } from "@/app/common/upload";
 import { useFileUpload } from "@/app/common/hooks";
+import { filterImageFiles } from "@/app/image/common/filter-image-files";
 import { useImageUtils } from "@/app/image/common/use-image-utils.hooks";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -32,30 +33,28 @@ import "./cropper.css";
 type FlipMode = "none" | "horizontal" | "vertical" | "both";
 
 export function PageClient() {
-  const [isLoaded, imageUtils] = useImageUtils();
-  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } =
-    useFileUpload((f) =>
-      Array.from(f).filter((file) => {
-        if (file.type.startsWith("image/")) return true;
-        const lower = file.name.toLowerCase();
-        return lower.endsWith(".heic") || lower.endsWith(".heif");
-      }),
-    );
+  // 1) Props
+  // No props for this page component.
 
-  const file = files[0]?.file;
-  const isPng = file?.type === "image/png";
+  // 2) State
   const cropperRef = useRef<CropperRef>(null);
-
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
   const [rotation, setRotation] = useState(0);
-
   const [isCropping, setIsCropping] = useState(false);
   const [result, setResult] = useState<{ blob: Blob; url: string } | null>(null);
 
+  // 3) Custom hooks
+  const [isLoaded, imageUtils] = useImageUtils();
+  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } = useFileUpload(filterImageFiles);
+
+  // 4) Derived props and state
+  const file = files[0]?.file;
+  const isPng = file?.type === "image/png";
   const flipMode: FlipMode =
     flipH && flipV ? "both" : flipH ? "horizontal" : flipV ? "vertical" : "none";
 
+  // 5) Utils
   function resizeStencil(widthMultiplier = 1, heightMultiplier = 1) {
     const cropper = cropperRef.current;
     if (!cropper) return;
@@ -84,6 +83,7 @@ export function PageClient() {
     ]);
   }
 
+  // 6) Handlers
   function handleZoomIn() {
     resizeStencil(0.85, 0.85);
   }
@@ -172,6 +172,7 @@ export function PageClient() {
     resetInput();
   }
 
+  // 7) Effects
   useEffect(() => {
     setResult((previous) => {
       if (previous?.url) URL.revokeObjectURL(previous.url);
@@ -192,6 +193,7 @@ export function PageClient() {
     setRotation(0);
   }, [file]);
 
+  // 8) Render
   if (!file) {
     return (
       <div className="h-full flex items-center justify-center p-4">

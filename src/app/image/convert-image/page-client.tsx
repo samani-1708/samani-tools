@@ -1,7 +1,8 @@
 "use client";
 
 import { useFileUpload } from "@/app/common/hooks";
-import { useImageUtils } from "@/app/image/common/use-image-utils.hooks";
+import { filterImageFiles } from "@/app/image/common/filter-image-files";
+import { ConversionMode, useImageUtils } from "@/app/image/common/use-image-utils.hooks";
 import { PDFToolLayout } from "@/app/pdf/common/layouts/pdf-tool-layout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -30,66 +31,41 @@ const encodableFormats = IMAGE_FORMAT_OPTIONS.filter(
     f.mime !== "image/heic",
 );
 
-export function PageClient() {
-  const [isLoaded, imageUtils] = useImageUtils();
-  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } =
-    useFileUpload((f) =>
-      Array.from(f).filter((file) => {
-        if (file.type.startsWith("image/")) return true;
-        const lower = file.name.toLowerCase();
-        return lower.endsWith(".heic") || lower.endsWith(".heif");
-      }),
-    );
+const CONVERSION_MODES: Array<{ value: ConversionMode; label: string; helper: string }> = [
+  { value: "balanced", label: "Balanced", helper: "Recommended: good quality + controlled size." },
+  { value: "fast", label: "Fast", helper: "Faster conversion, stronger size limits." },
+  { value: "max_quality", label: "Max Quality", helper: "Best quality, larger files and slower processing." },
+];
 
-  const file = files[0]?.file;
+export function PageClient() {
+  // 1) Props
+  // No props for this page component.
+
+  // 2) State
   const [targetFormat, setTargetFormat] = useState<OutputImageFormat>("image/jpeg");
   const [quality, setQuality] = useState(90);
-  const [sizeSafe, setSizeSafe] = useState(true);
+  const [mode, setMode] = useState<ConversionMode>("balanced");
   const [isConverting, setIsConverting] = useState(false);
   const [supported, setSupported] = useState<Record<string, boolean>>({});
   const [result, setResult] = useState<{ blob: Blob; url: string } | null>(null);
   const [conversionNote, setConversionNote] = useState<string | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
+  // 3) Custom hooks
+  const [isLoaded, imageUtils] = useImageUtils();
+  const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } = useFileUpload(filterImageFiles);
 
-    async function detect() {
-      const support = await imageUtils.getEncodeSupport();
-      const entries = encodableFormats.map((item) => [item.mime, support[item.mime]] as const);
-
-      if (!mounted) return;
-      setSupported(Object.fromEntries(entries));
-    }
-
-    void detect();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (result?.url) URL.revokeObjectURL(result.url);
-    };
-  }, [result?.url]);
-
-  useEffect(() => {
-    if (!result?.url) return;
-    URL.revokeObjectURL(result.url);
-    setResult(null);
-    setConversionNote(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetFormat, quality, file]);
-
+  // 4) Derived props and state
+  const file = files[0]?.file;
   const showQuality = targetFormat !== "image/png" && targetFormat !== "image/tiff" && targetFormat !== "image/heic";
-
   const canConvert = Boolean(file) && !isConverting && isLoaded;
-
   const resultExt = useMemo(() => {
     return IMAGE_FORMAT_OPTIONS.find((item) => item.mime === targetFormat)?.ext || "img";
   }, [targetFormat]);
 
+  // 5) Utils
+  // No local utility helpers needed.
+
+  // 6) Handlers
   async function handleConvert() {
     if (!file || isConverting) return;
 
@@ -112,8 +88,7 @@ export function PageClient() {
       const blob = await imageUtils.convert(file, {
         format: targetFormat,
         quality: showQuality ? quality / 100 : undefined,
-        sizeSafe,
-        maxSizeMultiplier: 1.75,
+        mode,
       });
       const url = URL.createObjectURL(blob);
       setResult({ blob, url });
@@ -141,7 +116,7 @@ export function PageClient() {
       }
 
       const ratio = blob.size / file.size;
-      if (ratio > 3) {
+      if (ratio > 3 && mode !== "max_quality") {
         toast.warning(
           "Converted file is much larger than original. This can happen when converting to PNG/TIFF or high-quality settings.",
         );
@@ -166,6 +141,43 @@ export function PageClient() {
     resetInput();
   }
 
+  // 7) Effects
+  useEffect(() => {
+    let mounted = true;
+
+    async function detect() {
+      try {
+        const support = await imageUtils.getEncodeSupport();
+        const entries = encodableFormats.map((item) => [item.mime, support[item.mime]] as const);
+        if (!mounted) return;
+        setSupported(Object.fromEntries(entries));
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    void detect();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (result?.url) URL.revokeObjectURL(result.url);
+    };
+  }, [result?.url]);
+
+  useEffect(() => {
+    if (!result?.url) return;
+    URL.revokeObjectURL(result.url);
+    setResult(null);
+    setConversionNote(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetFormat, quality, mode, file]);
+
+  // 8) Render
   return (
     <PDFToolLayout
       showUpload={files.length === 0}
@@ -235,15 +247,27 @@ export function PageClient() {
             <QualitySlider value={quality} onChange={setQuality} disabled={isConverting} />
           )}
 
-          <label className="flex items-center gap-2 text-sm mb-4 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={sizeSafe}
-              onChange={(e) => setSizeSafe(e.target.checked)}
-              disabled={isConverting}
-            />
-            <span>Keep file size in check</span>
-          </label>
+          <div className="space-y-2 mb-4">
+            <Label htmlFor="conversion-mode">Conversion Mode</Label>
+            <Select
+              value={mode}
+              onValueChange={(value) => setMode(value as ConversionMode)}
+            >
+              <SelectTrigger id="conversion-mode">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CONVERSION_MODES.map((entry) => (
+                  <SelectItem key={entry.value} value={entry.value}>
+                    {entry.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {CONVERSION_MODES.find((entry) => entry.value === mode)?.helper}
+            </p>
+          </div>
 
           <div className="text-xs text-muted-foreground mb-4">
             Browser support: JPG {supported["image/jpeg"] ? "yes" : "no"}, PNG {supported["image/png"] ? "yes" : "no"}, WEBP {supported["image/webp"] ? "yes" : "no"}, AVIF {supported["image/avif"] ? "yes" : "no"}, TIFF {supported["image/tiff"] ? "yes" : "no"}

@@ -18,12 +18,14 @@ export type ImageWatermarkPosition =
   | "mosaic";
 
 export type EncodableImageFormat = "image/png" | "image/jpeg" | "image/webp" | "image/avif" | "image/tiff";
+export type ConversionMode = "fast" | "balanced" | "max_quality";
 
 export interface ConvertImageOptions {
   format: EncodableImageFormat;
   quality?: number;
   sizeSafe?: boolean;
   maxSizeMultiplier?: number;
+  mode?: ConversionMode;
 }
 
 export interface CompressImageOptions {
@@ -175,6 +177,7 @@ export function useImageUtils() {
   };
 
   const resetWorker = () => {
+    supportRef.current = null;
     remoteRef.current = null;
     workerRef.current?.terminate();
     workerRef.current = null;
@@ -204,6 +207,33 @@ export function useImageUtils() {
   };
 
   const operations = useMemo(() => {
+    const callWithFileInput = async <T>(
+      file: File,
+      call: (worker: Remote<ImageWorkerAPI>, input: WorkerImageInput) => Promise<T>,
+    ) => {
+      return withWorkerRetry(async (worker) => {
+        const input = await toWorkerInput(file);
+        return call(worker, transfer(input, [input.buffer]));
+      });
+    };
+
+    const callWithBatchInputs = async <TOptions, TResult>(
+      jobs: Array<NormalizedBatchJob<TOptions>>,
+      call: (worker: Remote<ImageWorkerAPI>, workerJobs: WorkerBatchJob<TOptions>[]) => Promise<TResult>,
+    ) => {
+      return withWorkerRetry(async (worker) => {
+        const workerJobs: WorkerBatchJob<TOptions>[] = await Promise.all(
+          jobs.map(async ({ id, job }) => ({
+            id,
+            file: await toWorkerInput(job.file),
+            options: job.options,
+          })),
+        );
+        const transferables = workerJobs.map((job) => job.file.buffer as Transferable);
+        return call(worker, transfer(workerJobs, transferables));
+      });
+    };
+
     const getEncodeSupport = async () => {
       if (!supportRef.current) {
         supportRef.current = await withWorkerRetry((worker) => worker.getEncodeSupport());
@@ -212,46 +242,40 @@ export function useImageUtils() {
     };
 
     const readDimensions = async (file: File) => {
-      const input = await toWorkerInput(file);
-      return withWorkerRetry((worker) => worker.readDimensions(transfer(input, [input.buffer])));
+      return callWithFileInput(file, (worker, input) => worker.readDimensions(input));
     };
 
     const convert = async (file: File, options: ConvertImageOptions) => {
-      const input = await toWorkerInput(file);
-      const out = await withWorkerRetry((worker) =>
-        worker.convert(transfer(input, [input.buffer]), options),
+      const out = await callWithFileInput(file, (worker, input) =>
+        worker.convert(input, options),
       );
       return toBlob(out.buffer, out.mime);
     };
 
     const compress = async (file: File, options: CompressImageOptions) => {
-      const input = await toWorkerInput(file);
-      const out = await withWorkerRetry((worker) =>
-        worker.compress(transfer(input, [input.buffer]), options),
+      const out = await callWithFileInput(file, (worker, input) =>
+        worker.compress(input, options),
       );
       return toBlob(out.buffer, out.mime);
     };
 
     const resize = async (file: File, options: ResizeImageOptions) => {
-      const input = await toWorkerInput(file);
-      const out = await withWorkerRetry((worker) =>
-        worker.resize(transfer(input, [input.buffer]), options),
+      const out = await callWithFileInput(file, (worker, input) =>
+        worker.resize(input, options),
       );
       return toBlob(out.buffer, out.mime);
     };
 
     const crop = async (file: File, options: CropImageOptions) => {
-      const input = await toWorkerInput(file);
-      const out = await withWorkerRetry((worker) =>
-        worker.crop(transfer(input, [input.buffer]), options),
+      const out = await callWithFileInput(file, (worker, input) =>
+        worker.crop(input, options),
       );
       return toBlob(out.buffer, out.mime);
     };
 
     const watermarkText = async (file: File, options: WatermarkTextOptions) => {
-      const input = await toWorkerInput(file);
-      const out = await withWorkerRetry((worker) =>
-        worker.watermarkText(transfer(input, [input.buffer]), options),
+      const out = await callWithFileInput(file, (worker, input) =>
+        worker.watermarkText(input, options),
       );
       return toBlob(out.buffer, out.mime);
     };
@@ -300,51 +324,24 @@ export function useImageUtils() {
 
     const batchConvert = async (jobs: Array<ImageBatchJob<ConvertImageOptions>>) => {
       const normalizedJobs = normalizeBatchJobs(jobs);
-      const workerJobs: WorkerBatchJob<ConvertImageOptions>[] = await Promise.all(
-        normalizedJobs.map(async ({ id, job }) => ({
-          id,
-          file: await toWorkerInput(job.file),
-          options: job.options,
-        })),
-      );
-      const transferables = workerJobs.map((job) => job.file.buffer as Transferable);
-
-      const results = await withWorkerRetry((worker) =>
-        worker.batchConvert(transfer(workerJobs, transferables)),
+      const results = await callWithBatchInputs(normalizedJobs, (worker, workerJobs) =>
+        worker.batchConvert(workerJobs),
       );
       return mapBatchResults(normalizedJobs, results);
     };
 
     const batchCompress = async (jobs: Array<ImageBatchJob<CompressImageOptions>>) => {
       const normalizedJobs = normalizeBatchJobs(jobs);
-      const workerJobs: WorkerBatchJob<CompressImageOptions>[] = await Promise.all(
-        normalizedJobs.map(async ({ id, job }) => ({
-          id,
-          file: await toWorkerInput(job.file),
-          options: job.options,
-        })),
-      );
-      const transferables = workerJobs.map((job) => job.file.buffer as Transferable);
-
-      const results = await withWorkerRetry((worker) =>
-        worker.batchCompress(transfer(workerJobs, transferables)),
+      const results = await callWithBatchInputs(normalizedJobs, (worker, workerJobs) =>
+        worker.batchCompress(workerJobs),
       );
       return mapBatchResults(normalizedJobs, results, () => "compressed");
     };
 
     const batchResize = async (jobs: Array<ImageBatchJob<ResizeImageOptions>>) => {
       const normalizedJobs = normalizeBatchJobs(jobs);
-      const workerJobs: WorkerBatchJob<ResizeImageOptions>[] = await Promise.all(
-        normalizedJobs.map(async ({ id, job }) => ({
-          id,
-          file: await toWorkerInput(job.file),
-          options: job.options,
-        })),
-      );
-      const transferables = workerJobs.map((job) => job.file.buffer as Transferable);
-
-      const results = await withWorkerRetry((worker) =>
-        worker.batchResize(transfer(workerJobs, transferables)),
+      const results = await callWithBatchInputs(normalizedJobs, (worker, workerJobs) =>
+        worker.batchResize(workerJobs),
       );
       return mapBatchResults(
         normalizedJobs,
@@ -357,17 +354,8 @@ export function useImageUtils() {
       jobs: Array<ImageBatchJob<WatermarkTextOptions>>,
     ) => {
       const normalizedJobs = normalizeBatchJobs(jobs);
-      const workerJobs: WorkerBatchJob<WatermarkTextOptions>[] = await Promise.all(
-        normalizedJobs.map(async ({ id, job }) => ({
-          id,
-          file: await toWorkerInput(job.file),
-          options: job.options,
-        })),
-      );
-      const transferables = workerJobs.map((job) => job.file.buffer as Transferable);
-
-      const results = await withWorkerRetry((worker) =>
-        worker.batchWatermarkText(transfer(workerJobs, transferables)),
+      const results = await callWithBatchInputs(normalizedJobs, (worker, workerJobs) =>
+        worker.batchWatermarkText(workerJobs),
       );
       return mapBatchResults(normalizedJobs, results, () => "watermarked");
     };
