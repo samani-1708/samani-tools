@@ -1,17 +1,26 @@
 import {
   BookOpenIcon,
+  BracesIcon,
+  CaseSensitiveIcon,
+  CodeIcon,
   ComponentIcon,
   CropIcon,
+  DiffIcon,
   FileImage,
+  FingerprintIcon,
   HashIcon,
+  KeyRoundIcon,
+  LinkIcon,
   LockIcon,
   LucideProps,
   MergeIcon,
   PencilRuler,
+  QrCodeIcon,
   RotateCcwIcon,
   ScalingIcon,
   SplitIcon,
   StampIcon,
+  TypeIcon,
   UnlockIcon,
 } from "lucide-react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
@@ -266,6 +275,92 @@ export const IMAGE_TOOLS_HEADER: ToolInfo[] = [
   EDIT_IMAGE,
 ] as const;
 
+
+// Utility Tools
+const QR_CODE: ToolInfo = {
+  title: "QR Code Generator",
+  href: "/utils/qr-code",
+  icon: QrCodeIcon,
+  theme: COLOR_TOKENS.PURPLE,
+  description: "Generate QR codes from text or URLs with customizable size, colors, and error correction.",
+} as const;
+
+const WORD_COUNTER: ToolInfo = {
+  title: "Word Counter",
+  href: "/utils/word-counter",
+  icon: TypeIcon,
+  theme: COLOR_TOKENS.CYAN,
+  description: "Count words, characters, sentences, and paragraphs with social media character limits.",
+} as const;
+
+const TEXT_ENCODE_DECODE: ToolInfo = {
+  title: "Text Encode Decode",
+  href: "/utils/text-encode-decode",
+  icon: CodeIcon,
+  theme: COLOR_TOKENS.LIME,
+  description: "Encode and decode Base64, Hex, URI Component, and HTML Entities.",
+} as const;
+
+const HASH_GENERATOR: ToolInfo = {
+  title: "Hash Generator",
+  href: "/utils/hash-generator",
+  icon: FingerprintIcon,
+  theme: COLOR_TOKENS.RED,
+  description: "Generate SHA-1, SHA-256, and SHA-512 hashes from text or files.",
+} as const;
+
+const CASE_CONVERTER: ToolInfo = {
+  title: "Case Converter",
+  href: "/utils/case-converter",
+  icon: CaseSensitiveIcon,
+  theme: COLOR_TOKENS.AMBER,
+  description: "Convert text between camelCase, snake_case, kebab-case, Title Case, and more.",
+} as const;
+
+const URL_ENCODE_DECODE: ToolInfo = {
+  title: "URL Encode/Decode",
+  href: "/utils/url-encode-decode",
+  icon: LinkIcon,
+  theme: COLOR_TOKENS.ORANGE,
+  description: "Encode or decode URLs with a detailed breakdown of URL components.",
+} as const;
+
+const JWT_PARSER: ToolInfo = {
+  title: "jwt-decode-encode",
+  href: "/utils/jwt-decode",
+  icon: KeyRoundIcon,
+  theme: COLOR_TOKENS.ROSE,
+  description:
+    "Decode, verify, and encode JWT tokens with header/payload inspection and HMAC signature checks.",
+} as const;
+
+const JSON_VIEWER: ToolInfo = {
+  title: "JSON Viewer",
+  href: "/utils/json-viewer",
+  icon: BracesIcon,
+  theme: COLOR_TOKENS.YELLOW,
+  description: "Format, minify, and explore JSON with a collapsible tree view and search.",
+} as const;
+
+const DIFF_CHECKER: ToolInfo = {
+  title: "Diff Checker",
+  href: "/utils/diff-checker",
+  icon: DiffIcon,
+  theme: COLOR_TOKENS.PINK,
+  description: "Compare two texts side-by-side with line, word, or character-level diffing.",
+} as const;
+
+export const UTILITY_TOOLS_HEADER: ToolInfo[] = [
+  QR_CODE,
+  WORD_COUNTER,
+  TEXT_ENCODE_DECODE,
+  HASH_GENERATOR,
+  CASE_CONVERTER,
+  URL_ENCODE_DECODE,
+  JWT_PARSER,
+  JSON_VIEWER,
+  DIFF_CHECKER,
+] as const;
 
 export const MEDIA_QUERIES = {
   sm: 'width >= 40rem',

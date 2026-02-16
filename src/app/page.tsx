@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Separator } from "@/components/ui/separator";
-import { IMAGE_TOOLS_HEADER, PDF_TOOLS_HEADER } from "./common/constants";
+import { IMAGE_TOOLS_HEADER, PDF_TOOLS_HEADER, UTILITY_TOOLS_HEADER } from "./common/constants";
 import { SITE_HERO_CONFIG, SiteHero } from "./site-hero";
 import { ToolCard } from "./common/tool-card";
 import { createMetadata } from "./common/seo";
@@ -54,6 +54,23 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-col-3 lg:grid-cols-3 xl:grid-cols-5 gap-6 ">
           {IMAGE_TOOLS_HEADER.map((tool) => (
+            <ToolCard {...tool} key={tool.href} />
+          ))}
+        </div>
+      </div>
+      <Separator />
+      <div className="mx-auto text-center flex flex-col px-4 md:px-6 container  max-w-7xl justify-center gap-8 items-center mt-12 mb-12">
+        <div className="flex flex-col gap-6 max-w-5xl">
+          <h3 className="text-2xl font-bold lg:text-4xl">
+            Developer & Text Tools
+          </h3>
+          <p className="text-base text-gray-600">
+            Encode, decode, hash, diff, and transform — essential developer
+            utilities that run entirely in your browser.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-col-3 lg:grid-cols-3 xl:grid-cols-5 gap-6 ">
+          {UTILITY_TOOLS_HEADER.map((tool) => (
             <ToolCard {...tool} key={tool.href} />
           ))}
         </div>
