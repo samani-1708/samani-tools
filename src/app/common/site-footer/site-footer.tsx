@@ -48,8 +48,6 @@ export function SiteFooter() {
           {/* Brand Section */}
           <div className="sm:col-span-2 lg:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-              </div>
               <div>
                 <h3 className="font-bold text-xl">{BRAND_NAME}</h3>
                 <p className="text-sm text-muted-foreground">
