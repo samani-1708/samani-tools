@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://thesamani.com";
-export const SITE_NAME = "SamAni Tools";
+export const SITE_NAME = "🤗 SamAni Tools";
 
 type MetadataInput = {
   title: string;

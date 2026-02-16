@@ -9,7 +9,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "SamAni - Free PDF and Image Tools",
+    default: "🤗 SamAni - Free PDF, Image, and Utility Tools",
     template: "%s | SamAni",
   },
   description:
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "SamAni - Free PDF and Image Tools",
+    title: "🤗 SamAni - Free PDF and Image Tools",
     description:
       "Edit PDF and image files directly in your browser. Fast, private, and free.",
     url: SITE_URL,
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "SamAni - Free PDF and Image Tools",
+    title: "🤗 SamAni - Free PDF and Image Tools",
     description:
       "Merge, split, compress, convert, crop, watermark, and resize files in your browser.",
   },
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     { name: "vtechguys", url: "https://github.com/vtechguys" },
     { name: "samani-1708", url: "https://github.com/samani-1708" },
   ],
-  creator: "SamAni",
+  creator: "🤗 SamAni",
   publisher: SITE_NAME,
   applicationName: SITE_NAME,
   category: "Technology",

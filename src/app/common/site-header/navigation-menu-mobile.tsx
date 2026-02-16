@@ -5,6 +5,7 @@ import {
   SettingsIcon,
   FileTextIcon,
   ImageIcon,
+  WrenchIcon,
   ExternalLinkIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +22,12 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { BRAND_NAME, IMAGE_TOOLS_HEADER, PDF_TOOLS_HEADER } from "../constants";
+import {
+  BRAND_NAME,
+  IMAGE_TOOLS_HEADER,
+  PDF_TOOLS_HEADER,
+  UTILITY_TOOLS_HEADER,
+} from "../constants";
 
 export function NavigationMenuMobile() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -66,9 +72,6 @@ function MobileNav({
             onNavigate={onNavigate}
             className="inline-flex items-center space-x-2"
           >
-            <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10">
-              <SettingsIcon className="h-6 w-6 text-primary" />
-            </div>
             <div>
               <div className="font-bold text-xl">{BRAND_NAME}</div>
               <div className="text-sm text-muted-foreground">
@@ -201,6 +204,76 @@ function MobileNav({
                 </Link>
               );
             })}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Utility Tools Section */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2 px-3">
+            <WrenchIcon className="h-5 w-5 text-violet-500" />
+            <h4 className="font-semibold text-base">Utility Tools</h4>
+          </div>
+          <div className="space-y-1">
+            {UTILITY_TOOLS_HEADER.map((tool) => {
+              const Icon = tool.icon;
+              const isActive = currentPath === tool.href;
+              return (
+                <Link
+                  key={tool.title}
+                  href={tool.href}
+                  onClick={onNavigate}
+                  className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <div
+                    className="p-1.5 rounded"
+                    style={{ backgroundColor: tool.theme.HOVER_BG }}
+                  >
+                    <Icon className="h-4 w-4" style={{ color: tool.theme.BG }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{tool.title}</div>
+                    <div className="text-xs text-muted-foreground line-clamp-1">
+                      {tool.description}
+                    </div>
+                  </div>
+                  {isActive && (
+                    <Badge variant="secondary" className="text-xs">
+                      Current
+                    </Badge>
+                  )}
+                </Link>
+              );
+            })}
+            <Link
+              href="/utils"
+              onClick={onNavigate}
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                currentPath === "/utils"
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              <div className="p-1.5 rounded bg-violet-50">
+                <WrenchIcon className="h-4 w-4 text-violet-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-medium text-sm">All Utility Tools</div>
+                <div className="text-xs text-muted-foreground">
+                  Browse complete collection
+                </div>
+              </div>
+              {currentPath === "/utils" && (
+                <Badge variant="secondary" className="text-xs">
+                  Current
+                </Badge>
+              )}
+            </Link>
           </div>
         </div>
       </div>

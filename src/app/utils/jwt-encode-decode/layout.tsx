@@ -5,7 +5,7 @@ export const metadata: Metadata = createMetadata({
   title: "jwt-decode-encode",
   description:
     "Decode, verify, and encode JWT tokens with header and payload inspection plus HMAC signature validation.",
-  path: "/utils/jwt-decode",
+  path: "/utils/jwt-encode-decode",
   keywords: [
     "jwt decode",
     "jwt verifier",

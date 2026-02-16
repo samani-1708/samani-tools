@@ -12,13 +12,19 @@ import {
   MailIcon,
   SettingsIcon,
   ShieldCheckIcon,
+  WrenchIcon,
   TwitterIcon,
   ZapIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { BuyMeACoffeeButton } from "../buy-me-a-coffee";
-import { BRAND_NAME, IMAGE_TOOLS_HEADER, PDF_TOOLS_HEADER } from "../constants";
+import {
+  BRAND_NAME,
+  IMAGE_TOOLS_HEADER,
+  PDF_TOOLS_HEADER,
+  UTILITY_TOOLS_HEADER,
+} from "../constants";
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
@@ -38,12 +44,11 @@ export function SiteFooter() {
     <footer className="w-full border-t bg-muted/30">
       <div className="container mx-auto px-4 md:px-6 py-8 md:py-12">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 md:gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 md:gap-8 mb-8">
           {/* Brand Section */}
           <div className="sm:col-span-2 lg:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
               <div className="p-2 rounded-lg bg-primary/10">
-                <SettingsIcon className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h3 className="font-bold text-xl">{BRAND_NAME}</h3>
@@ -150,6 +155,46 @@ export function SiteFooter() {
                   className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                 >
                   View All Image Tools →
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Resources & Support */}
+          <div className="space-y-4">
+            <button
+              onClick={() => toggleSection('utils')}
+              className="flex items-center justify-between w-full md:cursor-default group"
+            >
+              <div className="flex items-center space-x-2">
+                <WrenchIcon className="h-5 w-5 text-violet-500" />
+                <h4 className="font-semibold">Utility Tools</h4>
+              </div>
+              <ChevronDownIcon className={cn(
+                "h-4 w-4 transition-transform md:hidden",
+                isSectionExpanded('utils') && "rotate-180"
+              )} />
+            </button>
+            <ul className={cn(
+              "space-y-2 md:block",
+              !isSectionExpanded('utils') && "hidden"
+            )}>
+              {UTILITY_TOOLS_HEADER.slice(0, 5).map((tool) => (
+                <li key={tool.href}>
+                  <Link
+                    href={tool.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {tool.title}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <Link
+                  href="/utils"
+                  className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  View All Utility Tools →
                 </Link>
               </li>
             </ul>

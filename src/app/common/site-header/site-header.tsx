@@ -12,7 +12,6 @@ export function SiteHeader() {
         {/* Logo */}
         <div className="hidden md:flex">
           <Link href="/" className="flex items-center space-x-2">
-            <SettingsIcon className="h-6 w-6" />
             <span className="hidden font-bold sm:inline-block">
               {BRAND_NAME}
             </span>
@@ -29,7 +28,6 @@ export function SiteHeader() {
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="w-full flex-1 md:w-auto md:flex-none">
             <Link href="/" className="flex items-center space-x-2 md:hidden">
-              <SettingsIcon className="h-6 w-6" />
               <span className="font-bold">{BRAND_NAME}</span>
             </Link>
           </div>

@@ -8,7 +8,12 @@ import {
   NavigationMenuTrigger,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
-import { IMAGE_TOOLS_HEADER, PDF_TOOLS_HEADER, ToolInfo } from "../constants";
+import {
+  IMAGE_TOOLS_HEADER,
+  PDF_TOOLS_HEADER,
+  ToolInfo,
+  UTILITY_TOOLS_HEADER,
+} from "../constants";
 import React from "react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -85,6 +90,25 @@ export function NavigationMenuDesktop() {
           <NavigationMenuContent>
             <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[600px] lg:grid-cols-2">
               {IMAGE_TOOLS_HEADER.map((product) => (
+                <ListItem
+                  key={product.title}
+                  title={product.title}
+                  href={product.href}
+                  icon={product.icon}
+                  theme={product.theme}
+                >
+                  {product.description}
+                </ListItem>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Utility Tools</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[600px] lg:grid-cols-2">
+              {UTILITY_TOOLS_HEADER.map((product) => (
                 <ListItem
                   key={product.title}
                   title={product.title}

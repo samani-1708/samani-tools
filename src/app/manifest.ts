@@ -4,7 +4,7 @@ import { SITE_NAME, SITE_URL } from "./common/seo";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: SITE_NAME,
-    short_name: "SamAni",
+    short_name: "🤗 SamAni",
     description:
       "Free PDF and image utilities for merge, split, convert, crop, compress, watermark, and resize workflows.",
     start_url: "/",

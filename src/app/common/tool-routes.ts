@@ -20,3 +20,15 @@ export const IMAGE_TOOL_ROUTES = [
   "/image/watermark-image",
   "/image/edit-image",
 ] as const;
+
+export const UTILITY_TOOL_ROUTES = [
+  "/utils/qr-code",
+  "/utils/word-counter",
+  "/utils/text-encode-decode",
+  "/utils/hash-generator",
+  "/utils/case-converter",
+  "/utils/url-encode-decode",
+  "/utils/jwt-encode-decode",
+  "/utils/json-viewer",
+  "/utils/diff-checker",
+] as const;

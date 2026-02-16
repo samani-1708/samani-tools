@@ -355,7 +355,7 @@ export function PageClient() {
       <div className="mx-auto w-full max-w-7xl space-y-4">
         <div className="flex items-center gap-2">
           <KeyRoundIcon className="w-5 h-5" />
-          <h1 className="text-lg font-semibold">jwt-decode-encode</h1>
+          <h1 className="text-lg font-semibold">JWT endode/decode</h1>
         </div>
 
         <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">

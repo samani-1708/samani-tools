@@ -193,7 +193,7 @@ const PAGE_NUMBERS_PDF: ToolInfo = {
     "Add page numbers to your PDF with customizable position and format.",
 } as const;
 
-export const BRAND_NAME = "SamAni";
+export const BRAND_NAME = "🤗 SamAni";
 
 export const PDF_TOOLS_HEADER: ToolInfo[] = [
   MERGE_PDF,
@@ -326,8 +326,8 @@ const URL_ENCODE_DECODE: ToolInfo = {
 } as const;
 
 const JWT_PARSER: ToolInfo = {
-  title: "jwt-decode-encode",
-  href: "/utils/jwt-decode",
+  title: "JWT encoder/decoder",
+  href: "/utils/jwt-encode-decode",
   icon: KeyRoundIcon,
   theme: COLOR_TOKENS.ROSE,
   description:
