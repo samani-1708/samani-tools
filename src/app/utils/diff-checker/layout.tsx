@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { createMetadata } from "@/app/common/seo";
+import { ToolContainer } from "@/app/common/tool-container";
 
 export const metadata: Metadata = createMetadata({
   title: "Diff Checker",
@@ -13,5 +14,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <div className="w-full flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>{children}</div>;
+  return <ToolContainer>{children}</ToolContainer>;
 }

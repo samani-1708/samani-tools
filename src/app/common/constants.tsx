@@ -98,7 +98,7 @@ export type ToolInfo = {
 
 const MERGE_PDF: ToolInfo = {
   title: "Merge PDF",
-  href: "/pdf/merge-pdf",
+  href: "/pdf/merge-pdf?section=tool&section=header",
   icon: MergeIcon,
   theme: COLOR_TOKENS.ORANGE,
   description:
@@ -107,7 +107,7 @@ const MERGE_PDF: ToolInfo = {
 
 const SPLIT_PDF: ToolInfo = {
   title: "Split PDF",
-  href: "/pdf/split-pdf",
+  href: "/pdf/split-pdf?section=tool&section=header",
   icon: SplitIcon,
   theme: COLOR_TOKENS.AMBER,
   description:
@@ -116,7 +116,7 @@ const SPLIT_PDF: ToolInfo = {
 
 const COMPRESS_PDF: ToolInfo = {
   title: "Compress PDF",
-  href: "/pdf/compress-pdf",
+  href: "/pdf/compress-pdf?section=tool&section=header",
   icon: ComponentIcon,
   theme: COLOR_TOKENS.LIME,
   description: "Reduce the file size of your PDFs without sacrificing quality.",
@@ -124,7 +124,7 @@ const COMPRESS_PDF: ToolInfo = {
 
 const WATERMARK_PDF: ToolInfo = {
   title: "Watermark PDF",
-  href: "/pdf/watermark-pdf",
+  href: "/pdf/watermark-pdf?section=tool&section=header",
   icon: StampIcon,
   theme: COLOR_TOKENS.PURPLE,
   description: "Add custom watermarks to your PDF documents.",
@@ -132,7 +132,7 @@ const WATERMARK_PDF: ToolInfo = {
 
 const CROP_PDF: ToolInfo = {
   title: "Crop PDF",
-  href: "/pdf/crop-pdf",
+  href: "/pdf/crop-pdf?section=tool&section=header",
   icon: CropIcon,
   theme: COLOR_TOKENS.ROSE,
   description: "Crop PDF to match your desired dimensions",
@@ -140,7 +140,7 @@ const CROP_PDF: ToolInfo = {
 
 const IMAGE_TO_PDF: ToolInfo = {
   title: "Image to PDF",
-  href: "/pdf/image-to-pdf",
+  href: "/pdf/image-to-pdf?section=tool&section=header",
   icon: FileImage,
   theme: COLOR_TOKENS.YELLOW,
 
@@ -150,7 +150,7 @@ const IMAGE_TO_PDF: ToolInfo = {
 
 const ROTATE_PDF: ToolInfo = {
   title: "Rotate PDF",
-  href: "/pdf/rotate-pdf",
+  href: "/pdf/rotate-pdf?section=tool&section=header",
   icon: RotateCcwIcon,
   theme: COLOR_TOKENS.CYAN,
   description:
@@ -159,7 +159,7 @@ const ROTATE_PDF: ToolInfo = {
 
 const LOCK_PDF: ToolInfo = {
   title: "Lock PDF",
-  href: "/pdf/lock-pdf",
+  href: "/pdf/lock-pdf?section=tool&section=header",
   icon: LockIcon,
   theme: COLOR_TOKENS.RED,
   description:
@@ -168,7 +168,7 @@ const LOCK_PDF: ToolInfo = {
 
 const UNLOCK_PDF: ToolInfo = {
   title: "Unlock PDF",
-  href: "/pdf/unlock-pdf",
+  href: "/pdf/unlock-pdf?section=tool&section=header",
   icon: UnlockIcon,
   theme: COLOR_TOKENS.EMERALD,
   description:
@@ -177,7 +177,7 @@ const UNLOCK_PDF: ToolInfo = {
 
 const ORGANIZE_PDF: ToolInfo = {
   title: "Organize PDF",
-  href: "/pdf/organize-pdf",
+  href: "/pdf/organize-pdf?section=tool&section=header",
   icon: BookOpenIcon,
   theme: COLOR_TOKENS.PINK,
   description:
@@ -186,7 +186,7 @@ const ORGANIZE_PDF: ToolInfo = {
 
 const PAGE_NUMBERS_PDF: ToolInfo = {
   title: "Page Numbers",
-  href: "/pdf/page-numbers",
+  href: "/pdf/page-numbers?section=tool&section=header",
   icon: HashIcon,
   theme: COLOR_TOKENS.AMBER,
   description:
@@ -213,7 +213,7 @@ export const PDF_TOOLS_HEADER: ToolInfo[] = [
 // tools/imageTools.ts
 const COMPRESS_IMAGE: ToolInfo = {
   title: "Compress Image",
-  href: "/image/compress-image",
+  href: "/image/compress-image?section=tool&section=header",
   icon: ComponentIcon,
   theme: COLOR_TOKENS.EMERALD,
   description:
@@ -222,7 +222,7 @@ const COMPRESS_IMAGE: ToolInfo = {
 
 const RESIZE_IMAGE: ToolInfo = {
   title: "Resize Image",
-  href: "/image/resize-image",
+  href: "/image/resize-image?section=tool&section=header",
   icon: ScalingIcon,
   theme: COLOR_TOKENS.CYAN,
 
@@ -231,7 +231,7 @@ const RESIZE_IMAGE: ToolInfo = {
 
 const CROP_IMAGE: ToolInfo = {
   title: "Crop Image",
-  href: "/image/crop-image",
+  href: "/image/crop-image?section=tool&section=header",
   icon: CropIcon,
   theme: COLOR_TOKENS.PINK,
 
@@ -240,7 +240,7 @@ const CROP_IMAGE: ToolInfo = {
 
 const CONVERT_IMAGE: ToolInfo = {
   title: "Convert Image",
-  href: "/image/convert-image",
+  href: "/image/convert-image?section=tool&section=header",
   icon: FileImage,
   theme: COLOR_TOKENS.YELLOW,
 
@@ -249,7 +249,7 @@ const CONVERT_IMAGE: ToolInfo = {
 
 const WATERMARK_IMAGE: ToolInfo = {
   title: "Watermark Image",
-  href: "/image/watermark-image",
+  href: "/image/watermark-image?section=tool&section=header",
   icon: StampIcon,
   theme: COLOR_TOKENS.PURPLE,
 
@@ -259,7 +259,7 @@ const WATERMARK_IMAGE: ToolInfo = {
 
 const EDIT_IMAGE: ToolInfo = {
   title: "Edit Image",
-  href: "/image/edit-image",
+  href: "/image/edit-image?section=tool&section=header",
   icon: PencilRuler,
   theme: COLOR_TOKENS.ORANGE,
   description:
@@ -279,7 +279,7 @@ export const IMAGE_TOOLS_HEADER: ToolInfo[] = [
 // Utility Tools
 const QR_CODE: ToolInfo = {
   title: "QR Code Generator",
-  href: "/utils/qr-code",
+  href: "/utils/qr-code?section=tool&section=header",
   icon: QrCodeIcon,
   theme: COLOR_TOKENS.PURPLE,
   description: "Generate QR codes from text or URLs with customizable size, colors, and error correction.",
@@ -287,7 +287,7 @@ const QR_CODE: ToolInfo = {
 
 const WORD_COUNTER: ToolInfo = {
   title: "Word Counter",
-  href: "/utils/word-counter",
+  href: "/utils/word-counter?section=tool&section=header",
   icon: TypeIcon,
   theme: COLOR_TOKENS.CYAN,
   description: "Count words, characters, sentences, and paragraphs with social media character limits.",
@@ -295,7 +295,7 @@ const WORD_COUNTER: ToolInfo = {
 
 const TEXT_ENCODE_DECODE: ToolInfo = {
   title: "Text Encode Decode",
-  href: "/utils/text-encode-decode",
+  href: "/utils/text-encode-decode?section=tool&section=header",
   icon: CodeIcon,
   theme: COLOR_TOKENS.LIME,
   description: "Encode and decode Base64, Hex, URI Component, and HTML Entities.",
@@ -303,7 +303,7 @@ const TEXT_ENCODE_DECODE: ToolInfo = {
 
 const HASH_GENERATOR: ToolInfo = {
   title: "Hash Generator",
-  href: "/utils/hash-generator",
+  href: "/utils/hash-generator?section=tool&section=header",
   icon: FingerprintIcon,
   theme: COLOR_TOKENS.RED,
   description: "Generate SHA-1, SHA-256, and SHA-512 hashes from text or files.",
@@ -311,7 +311,7 @@ const HASH_GENERATOR: ToolInfo = {
 
 const CASE_CONVERTER: ToolInfo = {
   title: "Case Converter",
-  href: "/utils/case-converter",
+  href: "/utils/case-converter?section=tool&section=header",
   icon: CaseSensitiveIcon,
   theme: COLOR_TOKENS.AMBER,
   description: "Convert text between camelCase, snake_case, kebab-case, Title Case, and more.",
@@ -319,7 +319,7 @@ const CASE_CONVERTER: ToolInfo = {
 
 const URL_ENCODE_DECODE: ToolInfo = {
   title: "URL Encode/Decode",
-  href: "/utils/url-encode-decode",
+  href: "/utils/url-encode-decode?section=tool&section=header",
   icon: LinkIcon,
   theme: COLOR_TOKENS.ORANGE,
   description: "Encode or decode URLs with a detailed breakdown of URL components.",
@@ -327,7 +327,7 @@ const URL_ENCODE_DECODE: ToolInfo = {
 
 const JWT_PARSER: ToolInfo = {
   title: "JWT encoder/decoder",
-  href: "/utils/jwt-encode-decode",
+  href: "/utils/jwt-encode-decode?section=tool&section=header",
   icon: KeyRoundIcon,
   theme: COLOR_TOKENS.ROSE,
   description:
@@ -336,7 +336,7 @@ const JWT_PARSER: ToolInfo = {
 
 const JSON_VIEWER: ToolInfo = {
   title: "JSON Viewer",
-  href: "/utils/json-viewer",
+  href: "/utils/json-viewer?section=tool&section=header",
   icon: BracesIcon,
   theme: COLOR_TOKENS.YELLOW,
   description: "Format, minify, and explore JSON with a collapsible tree view and search.",
@@ -344,7 +344,7 @@ const JSON_VIEWER: ToolInfo = {
 
 const DIFF_CHECKER: ToolInfo = {
   title: "Diff Checker",
-  href: "/utils/diff-checker",
+  href: "/utils/diff-checker?section=tool&section=header",
   icon: DiffIcon,
   theme: COLOR_TOKENS.PINK,
   description: "Compare two texts side-by-side with line, word, or character-level diffing.",

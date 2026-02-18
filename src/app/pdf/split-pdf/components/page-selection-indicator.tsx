@@ -11,7 +11,6 @@ export function PageSelectionIndicator(props: PageSelectionIndicatorProps) {
   const { isSelected = false, onToggle } = props;
 
   const handleClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
-    console.log("PageSelectionIndicator clicked", isSelected);
     onToggle?.(e);
   };
 

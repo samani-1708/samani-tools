@@ -168,7 +168,6 @@ export function useFileListManager2<FileType extends FileUploaded>(
         if (file.url) URL.revokeObjectURL(file.url);
         if (file.afterEditUrl) URL.revokeObjectURL(file.afterEditUrl);
       } catch (error) {
-        console.error(error);
       }
 
       nextFiles.splice(index, 1);
@@ -377,7 +376,6 @@ export function usePDFLib() {
           moudleRef.current = moudleLoading;
           setIsLoaded(true);
         } catch (e) {
-          console.error(e);
           alert("Error loading pdf-lib library");
         }
       }
@@ -493,7 +491,7 @@ export function usePDFFilePages(
           .then((fileUpdates) => {
             if (!isCancelled) setFileStates(fileUpdates);
           })
-          .catch((e) => console.error(e));
+          .catch(() => {});
       }, delay);
     }
 

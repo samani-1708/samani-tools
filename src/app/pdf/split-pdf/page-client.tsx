@@ -85,8 +85,6 @@ function getRanges(mode: SplitModes, ranges: number[][], totalPages = 1) {
     }
   }
 
-  console.log("debug::", {processRanges})
-
   return processRanges;
 }
 
@@ -156,7 +154,6 @@ export function PageClient() {
 
       toast.success("Done!");
     } catch (error) {
-      console.error(error);
       toast.error("Unable to split");
     } finally {
       setIsSplitting(false);
@@ -184,8 +181,6 @@ export function PageClient() {
     setMode("RANGE");
   }
 
-  console.log("debug::", ranges);
-
   useEffect(() => {
     if (isLoaded && fileUploaded?.file && totalPages === -1) {
       async function countPages() {
@@ -195,7 +190,7 @@ export function PageClient() {
         setTotalPages(pagesCount);
       }
 
-      countPages().catch((e) => console.error(e));
+      countPages().catch(() => {});
     }
   }, [fileUploaded, isLoaded, totalPages]);
 
@@ -211,8 +206,6 @@ export function PageClient() {
     setResult(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, fileUploaded?.id, JSON.stringify(ranges)]);
-
-  console.log("aniket::: totalPages", totalPages);
 
   return (
     <PDFToolLayout
@@ -346,8 +339,8 @@ export function PageClient() {
       actions={
         result ? (
           <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download split archive">
-            <DownloadIcon className="w-5 h-5 sm:mr-2" />
-            <span className="hidden sm:inline">Download</span>
+            Download
+            <DownloadIcon className="w-5 h-5 ml-2" />
           </Button>
         ) : (
           <ProcessingButton
@@ -361,8 +354,8 @@ export function PageClient() {
       }
       secondaryActions={
         <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
-          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
-          <span className="hidden sm:inline">Start Over</span>
+          Start Over
+          <RotateCcwIcon className="w-4 h-4 ml-2" />
         </Button>
       }
     />

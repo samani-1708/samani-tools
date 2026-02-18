@@ -2,23 +2,21 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeftRight,
   Check,
   Download,
+  Pencil,
   Settings,
   X,
 } from "lucide-react";
 import { useDiffStore } from "../store";
-import { SUPPORTED_LANGUAGES } from "../types";
-import type { FileType, Precision, ViewMode } from "../types";
+import type { FileType } from "../types";
 import { downloadMergedText } from "../lib/merge-utils";
 
 function SegmentedControl<T extends string>({
@@ -31,13 +29,13 @@ function SegmentedControl<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="flex items-center rounded-md border border-border overflow-hidden">
+    <div className="inline-flex items-center rounded-md border border-border overflow-hidden h-8">
       {options.map((opt) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
           className={cn(
-            "px-3 py-1.5 text-xs font-medium transition-colors",
+            "px-2.5 h-full text-xs font-medium transition-colors whitespace-nowrap",
             value === opt.value
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-muted"
@@ -50,16 +48,52 @@ function SegmentedControl<T extends string>({
   );
 }
 
+function ToolbarButton({
+  onClick,
+  disabled,
+  icon: Icon,
+  label,
+  tooltip,
+  variant = "outline",
+  active,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  icon?: React.ComponentType<{ className?: string }>;
+  label?: string;
+  tooltip?: string;
+  variant?: "outline" | "ghost" | "default";
+  active?: boolean;
+}) {
+  const btn = (
+    <Button
+      variant={variant}
+      size="sm"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn("h-8 text-xs gap-1.5", active && "bg-muted", !label && "px-2")}
+    >
+      {Icon && <Icon className="h-3.5 w-3.5" />}
+      {label && <span className="hidden sm:inline">{label}</span>}
+    </Button>
+  );
+
+  if (tooltip) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{btn}</TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return btn;
+}
+
 export function Toolbar() {
   const {
     fileType,
     setFileType,
-    viewMode,
-    setViewMode,
-    precision,
-    setPrecision,
-    syntaxLang,
-    setSyntaxLang,
     hasDiffed,
     computing,
     computeDiff,
@@ -70,109 +104,106 @@ export function Toolbar() {
     settingsOpen,
     setSettingsOpen,
     editInputs,
+    leftFile,
+    rightFile,
+    setLeftFile,
+    setRightFile,
   } = useDiffStore();
 
+  const hasFiles = !!leftFile && !!rightFile;
+
   return (
-    <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-border bg-muted/50">
-      <SegmentedControl<FileType>
-        options={[
-          { value: "text", label: "Text" },
-          { value: "image", label: "Image" },
-        ]}
-        value={fileType}
-        onChange={setFileType}
-      />
+    <div className="border-b border-border bg-muted/50">
+      {/* Row 1: Primary controls — always visible */}
+      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2">
+        <SegmentedControl<FileType>
+          options={[
+            { value: "text", label: "Text" },
+            { value: "image", label: "Image" },
+          ]}
+          value={fileType}
+          onChange={setFileType}
+        />
 
-      {fileType === "text" && (
-        <>
-          <Button onClick={hasDiffed ? editInputs : computeDiff} disabled={computing}>
-            {computing ? "Computing..." : hasDiffed ? "Edit Inputs" : "Find Differences"}
-          </Button>
+        <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
 
-          <Button variant="outline" size="icon" onClick={swapSides}>
-            <ArrowLeftRight className="h-4 w-4" />
-          </Button>
+        {/* Text mode actions */}
+        {fileType === "text" && (
+          <>
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              onClick={hasDiffed ? editInputs : computeDiff}
+              disabled={computing}
+            >
+              {computing ? "..." : hasDiffed ? (
+                <><Pencil className="h-3.5 w-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Edit</span></>
+              ) : (
+                <><span className="sm:hidden">Diff</span><span className="hidden sm:inline">Find Differences</span></>
+              )}
+            </Button>
 
-          <SegmentedControl<ViewMode>
-            options={[
-              { value: "split", label: "Split" },
-              { value: "unified", label: "Unified" },
-            ]}
-            value={viewMode}
-            onChange={setViewMode}
-          />
+            <ToolbarButton
+              onClick={swapSides}
+              icon={ArrowLeftRight}
+              tooltip="Swap sides"
+            />
+          </>
+        )}
 
-          <SegmentedControl<Precision>
-            options={[
-              { value: "line", label: "Line" },
-              { value: "word", label: "Word" },
-              { value: "char", label: "Char" },
-            ]}
-            value={precision}
-            onChange={setPrecision}
-          />
+        {/* Image mode actions */}
+        {fileType === "image" && hasFiles && (
+          <>
+            <ToolbarButton
+              onClick={() => { setLeftFile(null); setRightFile(null); }}
+              icon={Pencil}
+              label="Change"
+              tooltip="Change images"
+            />
+            <ToolbarButton
+              onClick={swapSides}
+              icon={ArrowLeftRight}
+              tooltip="Swap sides"
+            />
+          </>
+        )}
 
-          <Select value={syntaxLang} onValueChange={setSyntaxLang}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <SelectItem key={lang.value} value={lang.value}>
-                  {lang.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {hasDiffed && (
-            <div className="flex items-center gap-1 ml-auto">
-              <Button
-                variant="outline"
-                size="sm"
+        {/* Right-aligned: merge controls (text diffed) + settings */}
+        <div className="ml-auto flex items-center gap-1.5">
+          {fileType === "text" && hasDiffed && (
+            <>
+              <ToolbarButton
                 onClick={acceptAll}
-                className="text-xs gap-1"
-              >
-                <Check className="h-3 w-3" /> Accept All
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+                icon={Check}
+                label="Accept All"
+                tooltip="Accept all changes"
+              />
+              <ToolbarButton
                 onClick={rejectAll}
-                className="text-xs gap-1"
-              >
-                <X className="h-3 w-3" /> Reject All
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+                icon={X}
+                label="Reject All"
+                tooltip="Reject all changes"
+              />
+              <ToolbarButton
                 onClick={() => downloadMergedText(getMergedText())}
-                className="text-xs gap-1"
-              >
-                <Download className="h-3 w-3" /> Download
-              </Button>
-            </div>
+                icon={Download}
+                tooltip="Download merged result"
+              />
+            </>
           )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSettingsOpen(!settingsOpen)}
-            className={cn(
-              hasDiffed ? "" : "ml-auto",
-              settingsOpen && "bg-muted"
-            )}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        </>
-      )}
+          {fileType === "text" && (
+            <ToolbarButton
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              icon={Settings}
+              tooltip="Settings"
+              variant="ghost"
+              active={settingsOpen}
+            />
+          )}
+        </div>
+      </div>
 
-      {fileType !== "text" && (
-        <Button variant="outline" size="icon" onClick={swapSides}>
-          <ArrowLeftRight className="h-4 w-4" />
-        </Button>
-      )}
     </div>
   );
 }

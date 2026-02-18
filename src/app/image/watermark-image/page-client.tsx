@@ -247,7 +247,6 @@ export function PageClient() {
       );
       toast.success("Watermarked image downloaded");
     } catch (error) {
-      console.error(error);
       toast.error((error as Error).message || "Failed to download watermarked image");
     } finally {
       setIsDownloading(false);
@@ -279,7 +278,6 @@ export function PageClient() {
         const dims = await imageUtils.readDimensions(file);
         if (!ignore) setFontSize(getAutoFontSize(dims.width, dims.height));
       } catch (error) {
-        console.error(error);
       }
     })();
 
@@ -478,10 +476,8 @@ export function PageClient() {
           className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold"
           aria-label="Download watermarked image"
         >
-          <DownloadIcon className="w-5 h-5 sm:mr-2" />
-          <span className="hidden sm:inline">
-            {isDownloading ? "Preparing..." : "Download"}
-          </span>
+          {isDownloading ? "Preparing..." : "Download"}
+          <DownloadIcon className="w-5 h-5 ml-2" />
         </Button>
       }
       secondaryActions={
@@ -491,8 +487,8 @@ export function PageClient() {
           className="w-full"
           aria-label="Start over"
         >
-          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
-          <span className="hidden sm:inline">Watermark Another</span>
+          Watermark Another
+          <RotateCcwIcon className="w-4 h-4 ml-2" />
         </Button>
       }
     />

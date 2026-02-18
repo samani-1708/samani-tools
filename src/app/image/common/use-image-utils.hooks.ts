@@ -384,8 +384,7 @@ export function useImageUtils() {
         if (mounted) setIsLoaded(true);
         return worker.warmup();
       })
-      .catch((error) => {
-        console.error("Failed to initialize image worker:", error);
+      .catch(() => {
         if (mounted) {
           // Let users proceed; operations can still attempt lazy codec init.
           setIsLoaded(true);

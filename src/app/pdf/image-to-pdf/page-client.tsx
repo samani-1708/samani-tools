@@ -83,7 +83,7 @@ export function PageClient() {
       const url = createPDFBlobURL(buffer);
       setResult({ url, filename: "images-to-pdf.pdf" });
     } catch (error) {
-      console.error("Error converting images to PDF:", error);
+
     } finally {
       setIsConverting(false);
     }
@@ -268,8 +268,8 @@ export function PageClient() {
       actions={
         result ? (
           <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download PDF">
-            <DownloadIcon className="w-5 h-5 sm:mr-2" />
-            <span className="hidden sm:inline">Download</span>
+            Download
+            <DownloadIcon className="w-5 h-5 ml-2" />
           </Button>
         ) : (
           <ProcessingButton
@@ -283,8 +283,8 @@ export function PageClient() {
       }
       secondaryActions={
         <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
-          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
-          <span className="hidden sm:inline">Start Over</span>
+          Start Over
+          <RotateCcwIcon className="w-4 h-4 ml-2" />
         </Button>
       }
     />

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import {
   EncodableImageFormat,
   downloadBlob,
+  formatBytes,
   getBaseName,
 } from "../common/image-utils";
 import { QualitySlider } from "../common/quality-slider";
@@ -40,7 +41,7 @@ export function PageClient() {
   const [height, setHeight] = useState(0);
   const [mode, setMode] = useState<"dimensions" | "percentage">("dimensions");
   const [percentage, setPercentage] = useState(100);
-  const [quality, setQuality] = useState(80);
+  const [quality, setQuality] = useState(100);
   const [result, setResult] = useState<{ blob: Blob; url: string; format: EncodableImageFormat } | null>(null);
 
   // 3) Custom hooks
@@ -109,7 +110,6 @@ export function PageClient() {
       setResult({ blob, url, format });
       toast.success("Image resized successfully");
     } catch (error) {
-      console.error(error);
       toast.error((error as Error).message || "Resize failed");
     } finally {
       setIsProcessing(false);
@@ -131,7 +131,7 @@ export function PageClient() {
     setHeight(0);
     setMode("dimensions");
     setPercentage(100);
-    setQuality(80);
+    setQuality(100);
     setKeepAspectRatio(true);
     resetInput();
   }
@@ -148,7 +148,6 @@ export function PageClient() {
         setHeight(dims.height);
         setPercentage(100);
       } catch (error) {
-        console.error(error);
         toast.error("Could not read image dimensions");
       }
     }
@@ -193,13 +192,16 @@ export function PageClient() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={files[0].url} alt="Uploaded" className="max-w-full max-h-[420px] rounded-lg border bg-muted" />
               <p className="text-sm text-muted-foreground truncate">{file.name}</p>
-              <p className="text-sm text-muted-foreground">Original: {originalWidth} x {originalHeight}</p>
+              <p className="text-sm text-muted-foreground">Original: {originalWidth} x {originalHeight} ({formatBytes(file.size)})</p>
             </div>
             {result && (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Resized Preview</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={result.url} alt="Resized" className="max-w-full max-h-[420px] rounded-lg border bg-muted" />
+                <p className="text-sm text-muted-foreground">
+                  Resized: {width} x {height} ({formatBytes(result.blob.size)})
+                </p>
               </div>
             )}
           </div>
@@ -270,8 +272,8 @@ export function PageClient() {
       actions={
         result ? (
           <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download resized image">
-            <DownloadIcon className="w-5 h-5 sm:mr-2" />
-            <span className="hidden sm:inline">Download</span>
+            Download
+            <DownloadIcon className="w-5 h-5 ml-2" />
           </Button>
         ) : (
           <ProcessingButton
@@ -285,8 +287,8 @@ export function PageClient() {
       }
       secondaryActions={
         <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
-          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
-          <span className="hidden sm:inline">Start Over</span>
+          Start Over
+          <RotateCcwIcon className="w-4 h-4 ml-2" />
         </Button>
       }
     />

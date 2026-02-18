@@ -10,7 +10,6 @@ interface ProcessingButtonProps {
   processingLabel?: string;
   icon?: React.ReactNode;
   className?: string;
-  compactOnMobile?: boolean;
 }
 
 export function ProcessingButton({
@@ -21,7 +20,6 @@ export function ProcessingButton({
   processingLabel = "Processing...",
   icon,
   className,
-  compactOnMobile = true,
 }: ProcessingButtonProps) {
   return (
     <Button
@@ -31,17 +29,13 @@ export function ProcessingButton({
     >
       {isProcessing ? (
         <>
-          <Loader2Icon className={cn("w-5 h-5 animate-spin", !compactOnMobile && "mr-2")} />
-          <span className={cn(compactOnMobile && "hidden sm:inline", !compactOnMobile && "ml-2")}>
-            {processingLabel}
-          </span>
+          {processingLabel}
+          <Loader2Icon className="w-5 h-5 animate-spin ml-2" />
         </>
       ) : (
         <>
-          {icon || <ArrowRightIcon className={cn("w-5 h-5", !compactOnMobile && "mr-2")} />}
-          <span className={cn(compactOnMobile && "hidden sm:inline", !compactOnMobile && "ml-2")}>
-            {label}
-          </span>
+          {label}
+          {icon || <ArrowRightIcon className="w-5 h-5 ml-2" />}
         </>
       )}
     </Button>

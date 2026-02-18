@@ -21,8 +21,6 @@ type ControlsProps = {
 
 export function Controls(props: ControlsProps) {
   const { ranges, totalPages, mode, setRanges, setMode } = props;
-  console.log("sameeksha ", totalPages)
-
   const [byPageMode, setByPageMode] = useState<"all" | "custom">("all");
   const [mergeIntoSingle, setMergeIntoSingle] = useState(false);
 
@@ -107,8 +105,6 @@ export function Controls(props: ControlsProps) {
     }
   }
 
-  console.log("debug::: controls ranges", ranges)
-
   return (
     <Tabs defaultValue={mode} onValueChange={onTabChange} className="w-full">
       <TabsList className="grid  grid-cols-2 gap-2 min-h-14">
@@ -126,8 +122,6 @@ export function Controls(props: ControlsProps) {
         {ranges.map((range, index) => {
           const startPage = range[0]  + 1
           const endPage = range[range.length - 1] + 1
-
-          console.log("Debug:::", startPage, endPage)
 
           return (
             <div className="space-y-4" key={index} data-order={index}>

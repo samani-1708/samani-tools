@@ -77,7 +77,6 @@ export default class PDFUtils implements IPdfUtilsLib {
     ) as unknown as new () => Promise<PDFLibWorkerInstance>);
 
     this._workerInstance = await new WorkerClass();
-    console.log("PDF-Lib Worker initialized");
   }
 
   private async _getWorker(): Promise<PDFLibWorkerInstance> {

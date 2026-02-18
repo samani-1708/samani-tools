@@ -70,29 +70,15 @@ async function withFallback<T>(
     const task = tasks[i];
     if (!task.fn) continue;
 
-    const start = performance.now();
     const isLast = i === tasks.length - 1;
 
     try {
-      console.log(`[${label}] executing "${task.name}"...`);
       const result = await task.fn();
-      const elapsed = (performance.now() - start).toFixed(0);
-      console.log(`[${label}] "${task.name}" completed in ${elapsed}ms`);
       return result;
     } catch (err) {
-      const elapsed = (performance.now() - start).toFixed(0);
       if (isLast) {
-        console.error(
-          `[${label}] "${task.name}" failed after ${elapsed}ms:`,
-          err,
-        );
         throw err;
       }
-      const next = tasks.slice(i + 1).find((t) => t.fn);
-      console.warn(
-        `[${label}] "${task.name}" failed after ${elapsed}ms, falling back to "${next?.name ?? "none"}"`,
-        err,
-      );
     }
   }
 
@@ -286,9 +272,7 @@ export function usePDFUtils() {
           .then((moduleExport) => {
             pdfCPU.current = new moduleExport();
           })
-          .catch((err) => {
-            console.error("Failed to load pdf-cpu:", err);
-          });
+          .catch(() => {});
       }
     }
     loadPdfCPU();

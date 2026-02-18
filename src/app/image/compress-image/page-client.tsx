@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { DownloadIcon, RotateCcwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -27,27 +28,60 @@ import { QualitySlider } from "../common/quality-slider";
 
 const sizeOptions = [
   { label: "Keep original", value: "0" },
-  { label: "2560px", value: "2560" },
-  { label: "1920px", value: "1920" },
+  { label: "3840px (4K)", value: "3840" },
+  { label: "2560px (QHD)", value: "2560" },
+  { label: "1920px (HD)", value: "1920" },
   { label: "1280px", value: "1280" },
   { label: "800px", value: "800" },
 ];
 
+const formatOptions = [
+  { label: "Auto (smallest)", value: "auto" },
+  { label: "Keep original format", value: "original" },
+  { label: "JPEG", value: "image/jpeg" },
+  { label: "WebP", value: "image/webp" },
+  { label: "PNG", value: "image/png" },
+];
+
+type QualityPreset = { label: string; quality: number; description: string };
+
+const qualityPresets: QualityPreset[] = [
+  { label: "Original", quality: 100, description: "Same as input" },
+  { label: "High", quality: 90, description: "Near-original" },
+  { label: "Balanced", quality: 70, description: "Smaller file" },
+  { label: "Low", quality: 40, description: "Smallest file" },
+];
+
+function resolveInputFormat(file: File): EncodableImageFormat {
+  const mime = file.type;
+  if (mime === "image/jpeg" || mime === "image/png" || mime === "image/webp" || mime === "image/avif" || mime === "image/tiff") {
+    return mime as EncodableImageFormat;
+  }
+  return "image/jpeg";
+}
+
+function resolveOutputExt(format: EncodableImageFormat): string {
+  switch (format) {
+    case "image/webp": return "webp";
+    case "image/png": return "png";
+    case "image/avif": return "avif";
+    case "image/tiff": return "tiff";
+    case "image/jpeg":
+    default: return "jpg";
+  }
+}
+
 export function PageClient() {
-  // 1) Props
-  // No props for this page component.
-
-  // 2) State
-  const [quality, setQuality] = useState(80);
-  const [maxSize, setMaxSize] = useState("1920");
+  const [quality, setQuality] = useState(100);
+  const [maxSize, setMaxSize] = useState("0");
+  const [outputFormat, setOutputFormat] = useState("auto");
   const [isCompressing, setIsCompressing] = useState(false);
-  const [result, setResult] = useState<{ blob: Blob; size: number; format: EncodableImageFormat; timeMs: number } | null>(null);
+  const [originalDims, setOriginalDims] = useState<{ width: number; height: number } | null>(null);
+  const [result, setResult] = useState<{ blob: Blob; size: number; format: EncodableImageFormat; timeMs: number; width: number; height: number } | null>(null);
 
-  // 3) Custom hooks
   const [isLoaded, imageUtils] = useImageUtils();
   const { files, fileInputRef, handleFileUpload, triggerFileInput, resetInput } = useFileUpload(filterImageFiles);
 
-  // 4) Derived props and state
   const file = files[0]?.file ?? null;
   const originalSize = file?.size ?? 0;
   const canCompress = Boolean(file) && !isCompressing && isLoaded;
@@ -55,11 +89,8 @@ export function PageClient() {
     result && originalSize > 0
       ? (((originalSize - result.size) / originalSize) * 100).toFixed(1)
       : null;
+  const sizeIncreased = result ? result.size >= originalSize : false;
 
-  // 5) Utils
-  // No local utility helpers needed.
-
-  // 6) Handlers
   async function handleCompress() {
     if (!file || isCompressing) return;
 
@@ -68,7 +99,16 @@ export function PageClient() {
 
     try {
       const support = await imageUtils.getEncodeSupport();
-      const preferredFormat: EncodableImageFormat = support["image/webp"] ? "image/webp" : "image/jpeg";
+      let format: EncodableImageFormat;
+
+      if (outputFormat === "auto") {
+        format = support["image/webp"] ? "image/webp" : "image/jpeg";
+      } else if (outputFormat === "original") {
+        format = resolveInputFormat(file);
+      } else {
+        format = outputFormat as EncodableImageFormat;
+      }
+
       const limit = Number(maxSize);
 
       const t0 = performance.now();
@@ -76,15 +116,24 @@ export function PageClient() {
         quality: quality / 100,
         maxWidth: limit > 0 ? limit : undefined,
         maxHeight: limit > 0 ? limit : undefined,
-        format: preferredFormat,
+        format,
       });
       const timeMs = Math.round(performance.now() - t0);
 
-      setResult({ blob, size: blob.size, format: preferredFormat, timeMs });
+      // Read output dimensions
+      let outWidth = originalDims?.width ?? 0;
+      let outHeight = originalDims?.height ?? 0;
+      try {
+        const bmp = await createImageBitmap(blob);
+        outWidth = bmp.width;
+        outHeight = bmp.height;
+        bmp.close();
+      } catch {}
+
+      setResult({ blob, size: blob.size, format, timeMs, width: outWidth, height: outHeight });
 
       toast.success(`Compressed in ${timeMs < 1000 ? `${timeMs}ms` : `${(timeMs / 1000).toFixed(1)}s`}`);
     } catch (error) {
-      console.error(error);
       toast.error((error as Error).message || "Compression failed");
     } finally {
       setIsCompressing(false);
@@ -98,17 +147,28 @@ export function PageClient() {
 
   function handleDownload() {
     if (!file || !result) return;
-    const ext = result.format === "image/webp" ? "webp" : "jpg";
+    const ext = resolveOutputExt(result.format);
     downloadBlob(result.blob, `${getBaseName(file.name)}-compressed.${ext}`);
   }
 
-  // 7) Effects
+  useEffect(() => {
+    if (!file) {
+      setOriginalDims(null);
+      return;
+    }
+    let cancelled = false;
+    imageUtils.readDimensions(file).then((dims) => {
+      if (!cancelled) setOriginalDims(dims);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [file, imageUtils]);
+
   useEffect(() => {
     if (!result) return;
     setResult(null);
-  }, [quality, maxSize, file]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quality, maxSize, outputFormat, file]);
 
-  // 8) Render
   return (
     <PDFToolLayout
       showUpload={files.length === 0}
@@ -151,12 +211,57 @@ export function PageClient() {
       }
       controls={
         <>
-          <div className="text-sm text-muted-foreground mb-4">
-            <p>Original size: {formatBytes(originalSize)}</p>
+          <div className="text-sm text-muted-foreground mb-4 space-y-0.5">
+            <p>Original: <span className="font-medium text-foreground">{formatBytes(originalSize)}</span></p>
+            {originalDims && (
+              <p>Dimensions: <span className="font-medium text-foreground">{originalDims.width} x {originalDims.height}</span></p>
+            )}
           </div>
 
+          {/* Quality presets */}
+          <div className="space-y-2 mb-4">
+            <Label>Compression Level</Label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {qualityPresets.map((preset) => (
+                <button
+                  key={preset.label}
+                  onClick={() => setQuality(preset.quality)}
+                  disabled={isCompressing}
+                  className={cn(
+                    "rounded-md border px-2.5 py-2 text-left transition-colors",
+                    quality === preset.quality
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:bg-muted"
+                  )}
+                >
+                  <span className="text-sm font-medium block">{preset.label}</span>
+                  <span className="text-xs text-muted-foreground">{preset.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quality slider */}
           <QualitySlider value={quality} onChange={setQuality} disabled={isCompressing} />
 
+          {/* Output format */}
+          <div className="space-y-2 mb-5 mt-4">
+            <Label htmlFor="output-format">Output Format</Label>
+            <Select value={outputFormat} onValueChange={setOutputFormat} disabled={isCompressing}>
+              <SelectTrigger id="output-format">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {formatOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Max dimension */}
           <div className="space-y-2 mb-5">
             <Label htmlFor="max-size">Max Dimension</Label>
             <Select value={maxSize} onValueChange={setMaxSize} disabled={isCompressing}>
@@ -171,26 +276,49 @@ export function PageClient() {
                 ))}
               </SelectContent>
             </Select>
+            {maxSize !== "0" && (
+              <p className="text-xs text-muted-foreground">
+                Images larger than {maxSize}px will be downscaled
+              </p>
+            )}
           </div>
 
+          {/* Results */}
           {result && compressionRatio && (
-            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-5">
+            <div className={cn(
+              "border rounded-lg p-4 mb-5",
+              sizeIncreased
+                ? "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800"
+                : "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+            )}>
               <div className="text-sm space-y-1">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Original:</span>
-                  <span>{formatBytes(originalSize)}</span>
+                  <span>{formatBytes(originalSize)}{originalDims ? ` (${originalDims.width}x${originalDims.height})` : ""}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Compressed:</span>
-                  <span>{formatBytes(result.size)}</span>
+                  <span>{formatBytes(result.size)}{result.width ? ` (${result.width}x${result.height})` : ""}</span>
                 </div>
-                <div className="flex justify-between font-medium pt-1 border-t border-green-200 dark:border-green-800 mt-2">
+                <div className={cn(
+                  "flex justify-between font-medium pt-1 mt-2",
+                  sizeIncreased
+                    ? "border-t border-yellow-200 dark:border-yellow-800"
+                    : "border-t border-green-200 dark:border-green-800"
+                )}>
                   <span className="text-muted-foreground">Reduction:</span>
-                  <span className="text-green-600 dark:text-green-400">
-                    {Number(compressionRatio) > 0 ? `-${compressionRatio}%` : "No reduction"}
+                  <span className={sizeIncreased ? "text-yellow-600 dark:text-yellow-400" : "text-green-600 dark:text-green-400"}>
+                    {sizeIncreased
+                      ? "File already optimized"
+                      : Number(compressionRatio) > 0 ? `-${compressionRatio}%` : "No reduction"
+                    }
                   </span>
                 </div>
                 <div className="flex justify-between text-xs pt-1">
+                  <span className="text-muted-foreground">Format:</span>
+                  <span className="uppercase">{resolveOutputExt(result.format)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Time:</span>
                   <span>{result.timeMs < 1000 ? `${result.timeMs}ms` : `${(result.timeMs / 1000).toFixed(1)}s`}</span>
                 </div>
@@ -210,8 +338,8 @@ export function PageClient() {
       actions={
         result ? (
           <Button onClick={handleDownload} className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" aria-label="Download compressed image">
-            <DownloadIcon className="w-5 h-5 sm:mr-2" />
-            <span className="hidden sm:inline">Download</span>
+            Download
+            <DownloadIcon className="w-5 h-5 ml-2" />
           </Button>
         ) : (
           <ProcessingButton
@@ -225,8 +353,8 @@ export function PageClient() {
       }
       secondaryActions={
         <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
-          <RotateCcwIcon className="w-4 h-4 sm:mr-2" />
-          <span className="hidden sm:inline">Start Over</span>
+          Start Over
+          <RotateCcwIcon className="w-4 h-4 ml-2" />
         </Button>
       }
     />

@@ -52,7 +52,6 @@ export default class PDFCpuUtils implements IPdfUtilsLib {
         }
       };
       this.worker.onerror = (e) => {
-        console.error("[pdfcpu] worker error:", e);
       };
     }
     return 1;
@@ -68,11 +67,6 @@ export default class PDFCpuUtils implements IPdfUtilsLib {
     }
 
     const id = ++PDFCpuUtils.requestId;
-
-    const fileSizes = files
-      .map((f) => `${f.name}(${(f.buffer.byteLength / 1024).toFixed(1)}KB)`)
-      .join(", ");
-    console.log(`[pdfcpu] run #${id}: ${args.join(" ")} | files: ${fileSizes}`);
 
     return new Promise((resolve, reject) => {
       PDFCpuUtils.pending.set(id, { resolve, reject });
@@ -107,11 +101,6 @@ export default class PDFCpuUtils implements IPdfUtilsLib {
   }
 
   public async merge(files: FileObject[]): Promise<Uint8Array> {
-    const totalSize = files.reduce((sum, f) => sum + f.buffer.byteLength, 0);
-    console.log(
-      `[pdfcpu] merge: ${files.length} files, total ${(totalSize / 1024 / 1024).toFixed(2)}MB`
-    );
-
     const inputFiles = files.map((f, i) => this.toInput(f.buffer, `${i}.pdf`));
     const inputPaths = files.map((_, i) => `/input/${i}.pdf`);
 

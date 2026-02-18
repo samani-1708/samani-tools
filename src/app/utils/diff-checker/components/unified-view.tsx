@@ -56,7 +56,7 @@ export function UnifiedView() {
   const shownMergeIds = new Set<string>();
 
   return (
-    <div className="font-mono text-sm leading-6 overflow-auto flex-1">
+    <div className="font-mono text-xs sm:text-sm leading-5 sm:leading-6 overflow-auto flex-1">
       <table className="w-full border-collapse">
         <tbody>
           {lines.map((line, i) => {

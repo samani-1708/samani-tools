@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { SiteHeader } from "./common/site-header/site-header";
-import { SiteFooter } from "./common/site-footer/site-footer";
 import { Toaster } from "@/components/ui/sonner";
 import { SITE_NAME, SITE_URL } from "./common/seo";
+import { LayoutShell } from "./common/layout-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -87,16 +86,10 @@ export default function RootLayout(props: RootLayoutProps) {
   return (
     <html lang="en">
       <body className="flex flex-col min-h-screen">
-        {/* site header */}
-        <SiteHeader />
-
-        {/* Main content of page */}
-        <main className="flex-1">
+        <LayoutShell>
           {children}
           <Toaster />
-        </main>
-
-        <SiteFooter />
+        </LayoutShell>
         {/* Register service worker for WASM/JS asset precaching */}
         <Script id="sw-register" strategy="afterInteractive">{`
           if ('serviceWorker' in navigator) {

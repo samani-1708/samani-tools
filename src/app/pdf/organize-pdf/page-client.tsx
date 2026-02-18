@@ -284,7 +284,6 @@ export function PageClient() {
       setResult({ url, filename: `organized-${fileUploaded.name}` });
       toast.success("PDF organized successfully!");
     } catch (error) {
-      console.error(error);
       toast.error("Failed to organize PDF");
     } finally {
       setIsProcessing(false);
@@ -351,7 +350,7 @@ export function PageClient() {
           })),
         );
       }
-      countPages().catch((e) => console.error(e));
+      countPages().catch(() => {});
     }
   }, [fileUploaded, isLoaded, totalPages]);
 
@@ -419,8 +418,8 @@ export function PageClient() {
           </Button>
           {result ? (
             <Button onClick={handleDownload} size="sm">
-              <DownloadIcon className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Download</span>
+              Download
+              <DownloadIcon className="w-4 h-4 ml-2" />
             </Button>
           ) : (
             <Button
@@ -430,8 +429,8 @@ export function PageClient() {
             >
               {isProcessing ? (
                 <>
-                  <Loader2Icon className="w-4 h-4 animate-spin mr-2" />
                   Processing...
+                  <Loader2Icon className="w-4 h-4 animate-spin ml-2" />
                 </>
               ) : (
                 <>

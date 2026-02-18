@@ -60,7 +60,7 @@ function StatsBar() {
   if (!stats) return null;
 
   return (
-    <div className="flex items-center gap-4 px-4 py-2 text-xs border-t border-border bg-muted/40">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 sm:px-4 py-2 text-xs border-t border-border bg-muted/40">
       <span className="text-green-600 font-medium">
         +{stats.added} additions
       </span>
@@ -79,7 +79,7 @@ function StatsBar() {
 }
 
 export function PageClient() {
-  const { fileType, hasDiffed, viewMode, settingsOpen, leftFile, rightFile } =
+  const { fileType, hasDiffed, viewMode, leftFile, rightFile } =
     useDiffStore();
 
   const hasFiles = !!leftFile && !!rightFile;
@@ -93,27 +93,12 @@ export function PageClient() {
           {!hasDiffed && <InputPanel />}
 
           {hasDiffed && (
-            <div className="flex-1 flex overflow-hidden">
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <Suspense fallback={<LazyFallback />}>
-                  {viewMode === "split" ? <SplitView /> : <UnifiedView />}
-                </Suspense>
-                <StatsBar />
-              </div>
-              {settingsOpen && (
-                <Suspense fallback={null}>
-                  <div className="hidden md:block">
-                    <SettingsPanel />
-                  </div>
-                </Suspense>
-              )}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Suspense fallback={<LazyFallback />}>
+                {viewMode === "split" ? <SplitView /> : <UnifiedView />}
+              </Suspense>
+              <StatsBar />
             </div>
-          )}
-
-          {!hasDiffed && settingsOpen && (
-            <Suspense fallback={null}>
-              <SettingsPanel />
-            </Suspense>
           )}
         </>
       )}
@@ -129,6 +114,10 @@ export function PageClient() {
         </>
       )}
 
+      {/* Settings Sheet — always mounted, visibility controlled by store */}
+      <Suspense fallback={null}>
+        <SettingsPanel />
+      </Suspense>
     </div>
   );
 }

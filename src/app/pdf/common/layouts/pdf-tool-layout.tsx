@@ -108,8 +108,8 @@ export function PDFToolLayout({
           className="flex-shrink-0 h-10"
           aria-label="Open settings"
         >
-          <SettingsIcon className="w-4 h-4 sm:mr-1.5" />
           <span className="hidden sm:inline">Settings</span>
+          <SettingsIcon className="w-4 h-4 sm:ml-1.5" />
         </Button>
         <div className="flex-1 min-w-0">{actions}</div>
       </div>

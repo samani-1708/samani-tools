@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,23 +18,53 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useDiffStore } from "../store";
-import type { CustomRule } from "../types";
+import { SUPPORTED_LANGUAGES } from "../types";
+import type { CustomRule, Precision, ViewMode } from "../types";
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mql = window.matchMedia("(max-width: 767px)");
-    setIsMobile(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, []);
-  return isMobile;
+function ToggleGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="inline-flex items-center rounded-md border border-border overflow-hidden h-8 w-full">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "flex-1 h-full text-xs font-medium transition-colors whitespace-nowrap",
+              value === opt.value
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted"
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function SettingsContent() {
   const {
+    viewMode,
+    setViewMode,
+    precision,
+    setPrecision,
+    syntaxLang,
+    setSyntaxLang,
     ignoreWhitespace,
     ignoreCase,
     ignoreQuotes,
@@ -62,6 +92,46 @@ function SettingsContent() {
 
   return (
     <div className="space-y-6 p-4">
+      {/* View Options */}
+      <div>
+        <div className="space-y-3">
+          <ToggleGroup<ViewMode>
+            label="Layout"
+            options={[
+              { value: "split", label: "Split" },
+              { value: "unified", label: "Unified" },
+            ]}
+            value={viewMode}
+            onChange={setViewMode}
+          />
+          <ToggleGroup<Precision>
+            label="Precision"
+            options={[
+              { value: "line", label: "Line" },
+              { value: "word", label: "Word" },
+              { value: "char", label: "Char" },
+            ]}
+            value={precision}
+            onChange={setPrecision}
+          />
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">Syntax Highlighting</span>
+            <Select value={syntaxLang} onValueChange={setSyntaxLang}>
+              <SelectTrigger className="h-8 text-xs w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       {/* Ignore Options */}
       <div>
         <h3 className="text-sm font-semibold mb-3">Ignore Options</h3>
@@ -202,35 +272,17 @@ function SettingsContent() {
 
 export function SettingsPanel() {
   const { settingsOpen, setSettingsOpen } = useDiffStore();
-  const isMobile = useIsMobile();
-
-  // Mobile: bottom sheet
-  if (isMobile) {
-    return (
-      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <SheetContent side="bottom" className="h-[70vh]">
-          <SheetHeader>
-            <SheetTitle>Settings</SheetTitle>
-          </SheetHeader>
-          <ScrollArea className="h-full">
-            <SettingsContent />
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  // Desktop: inline sidebar
-  if (!settingsOpen) return null;
 
   return (
-    <div className="w-[320px] border-l border-border h-full overflow-auto shrink-0">
-      <div className="px-4 py-3 border-b border-border">
-        <h2 className="font-semibold text-sm">Settings</h2>
-      </div>
-      <ScrollArea className="h-full">
-        <SettingsContent />
-      </ScrollArea>
-    </div>
+    <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+      <SheetContent side="right" className="w-[320px] sm:w-[360px] p-0">
+        <SheetHeader className="px-4 py-3 border-b border-border">
+          <SheetTitle className="text-sm">Settings</SheetTitle>
+        </SheetHeader>
+        <ScrollArea className="h-[calc(100%-3.5rem)]">
+          <SettingsContent />
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
   );
 }

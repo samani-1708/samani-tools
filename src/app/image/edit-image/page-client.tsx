@@ -165,7 +165,6 @@ export function PageClient() {
       downloadBlob(blob, outputName);
       toast.success("Image edited and downloaded");
     } catch (error) {
-      console.error(error);
       toast.error((error as Error).message || "Failed to save edited image");
     }
   }, [defaultName, file, hasEditorChanges]);

@@ -28,6 +28,7 @@ import {
   formatBytes,
   getBaseName,
 } from "../common/image-utils";
+import { QualitySlider } from "../common/quality-slider";
 import "./cropper.css";
 
 type FlipMode = "none" | "horizontal" | "vertical" | "both";
@@ -41,6 +42,7 @@ export function PageClient() {
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [quality, setQuality] = useState(100);
   const [isCropping, setIsCropping] = useState(false);
   const [result, setResult] = useState<{ blob: Blob; url: string } | null>(null);
 
@@ -141,7 +143,7 @@ export function PageClient() {
           height: coordinates.height,
         },
         format,
-        quality: isPng ? undefined : 0.9,
+        quality: isPng ? undefined : quality / 100,
         rotation: rotation !== 0 ? rotation : undefined,
         flip: flipMode !== "none" ? flipMode : undefined,
       });
@@ -150,7 +152,6 @@ export function PageClient() {
       setResult({ blob, url });
       toast.success("Image cropped successfully");
     } catch (error) {
-      console.error(error);
       toast.error((error as Error).message || "Crop failed");
     } finally {
       setIsCropping(false);
@@ -169,6 +170,7 @@ export function PageClient() {
     setFlipH(false);
     setFlipV(false);
     setRotation(0);
+    setQuality(100);
     resetInput();
   }
 
@@ -305,6 +307,10 @@ export function PageClient() {
                 {isCropping ? "Cropping..." : "Crop Image"}
               </Button>
             </div>
+
+            {!isPng && (
+              <QualitySlider value={quality} onChange={setQuality} disabled={isCropping} />
+            )}
           </>
         ) : (
             <div className="space-y-4">

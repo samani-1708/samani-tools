@@ -92,10 +92,6 @@ const HAS_SIMD = (() => {
   }
 })();
 
-console.log(
-  `[image-worker] capabilities: SharedArrayBuffer=${HAS_SAB}, SIMD=${HAS_SIMD}`,
-);
-
 // ---------------------------------------------------------------------------
 // Absolute base URL for wasm-vips assets served from public/.
 // Workers spawned by Turbopack have blob: origins so bare paths fail.
@@ -144,9 +140,6 @@ async function initVips(withHeif: boolean) {
   });
 
   heifLoaded = withHeif;
-  console.log(
-    `[image-worker] vips init (heif=${withHeif}): ${(performance.now() - t0).toFixed(0)}ms`,
-  );
 }
 
 async function getVips(needsAvif = false) {
@@ -230,6 +223,57 @@ function qualityToVipsOpts(format: EncodableImageFormat, quality?: number): Reco
       };
     default: return {};
   }
+}
+
+/**
+ * Estimate the encoding quality of an image from its bits-per-pixel ratio.
+ * Used so the quality slider across all image tools represents "% of original"
+ * rather than an absolute quality — preventing the output from exceeding the
+ * original size.
+ *
+ * Formula: effectiveQuality = estimateQualityFromBpp(...) * sliderFraction
+ */
+function estimateQualityFromBpp(fileBytes: number, width: number, height: number, mime: string): number {
+  // Lossless formats — treat as Q=1.0
+  if (mime === "image/png" || mime === "image/tiff" || mime === "image/bmp") return 1.0;
+
+  const pixels = width * height;
+  if (pixels === 0) return 0.85;
+
+  const bpp = (fileBytes * 8) / pixels;
+
+  // Empirical bpp→quality mapping for JPEG/WebP:
+  //   bpp ~0.3 → Q≈40   bpp ~0.6 → Q≈55   bpp ~1.0 → Q≈70
+  //   bpp ~2.0 → Q≈85   bpp ~4.0 → Q≈93   bpp ~6.0+ → Q≈97
+  if (bpp >= 6.0) return 0.97;
+  if (bpp >= 4.0) return 0.93 + (bpp - 4.0) / 2.0 * 0.02;
+  if (bpp >= 2.0) return 0.85 + (bpp - 2.0) / 2.0 * 0.08;
+  if (bpp >= 1.0) return 0.70 + (bpp - 1.0) * 0.15;
+  if (bpp >= 0.6) return 0.55 + (bpp - 0.6) / 0.4 * 0.15;
+  if (bpp >= 0.3) return 0.40 + (bpp - 0.3) / 0.3 * 0.15;
+  return 0.35;
+}
+
+/**
+ * Shared quality pipeline used by ALL image tools (resize, compress, crop,
+ * watermark, convert).  Takes the raw slider fraction (0-1, where 1 = 100%)
+ * and converts it to an effective absolute quality by multiplying against the
+ * estimated original quality of the input image.
+ *
+ * outputQuality = estimatedInputQuality × sliderFraction
+ *
+ * Returns `undefined` for lossless formats (PNG/TIFF) where quality is N/A.
+ */
+function resolveEffectiveQuality(
+  sliderFraction: number | undefined,
+  fileBytes: number,
+  width: number,
+  height: number,
+  mime: string,
+): number | undefined {
+  if (sliderFraction == null) return undefined;
+  const estQ = estimateQualityFromBpp(fileBytes, width, height, mime);
+  return estQ * sliderFraction;
 }
 
 function defaultQualityForFormat(format: EncodableImageFormat): number | undefined {
@@ -401,18 +445,93 @@ function hexToRgb(hex: string): [number, number, number] {
   return [(num >> 16) & 0xff, (num >> 8) & 0xff, num & 0xff];
 }
 
-// Some inputs are mislabeled by browsers/upload pipelines.
-// Retry once with HEIF-enabled vips when generic decode fails.
-async function loadInputImageWithRetry(file: WorkerImageInput) {
-  let vips = await getVips(needsHeif(file, "image/jpeg"));
+// ---------------------------------------------------------------------------
+// Shared pipeline helpers
+// ---------------------------------------------------------------------------
+
+interface LoadedImage {
+  vips: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  img: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  srcW: number;
+  srcH: number;
+  inputMime: string;
+}
+
+/**
+ * Unified image loading: handles HEIF detection, retry on mislabeled inputs,
+ * and returns source dimensions + mime upfront.
+ */
+async function loadImage(file: WorkerImageInput, outputFormat: EncodableImageFormat): Promise<LoadedImage> {
+  const heif = needsHeif(file, outputFormat) || inputMightBeHeic(file);
+  let vips;
+  let img;
   try {
-    return { vips, image: vips.Image.newFromBuffer(file.buffer) };
+    vips = await getVips(heif);
+    img = vips.Image.newFromBuffer(file.buffer);
   } catch {
+    // Retry with HEIF support for mislabeled inputs
     vipsInstance = null;
     await initVips(true);
     vips = await getVips(true);
-    return { vips, image: vips.Image.newFromBuffer(file.buffer) };
+    img = vips.Image.newFromBuffer(file.buffer);
   }
+  return { vips, img, srcW: img.width, srcH: img.height, inputMime: file.type || "" };
+}
+
+interface EncodeAndTransferOptions {
+  img: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  format: EncodableImageFormat;
+  quality: number | undefined;
+  file: WorkerImageInput;
+  sizeGuard?: boolean; // if true, return original when output >= input
+}
+
+/**
+ * Encode → cleanup → transfer. Optionally applies a size guard (returns
+ * original if output >= input size).
+ */
+function encodeAndTransfer(opts: EncodeAndTransferOptions): { buffer: ArrayBuffer; mime: string } {
+  const out = writeImage(opts.img, opts.format, opts.quality);
+  opts.img.delete();
+
+  if (opts.sizeGuard && out.buffer.byteLength >= opts.file.buffer.byteLength) {
+    const copy = opts.file.buffer.slice(0);
+    return transfer({ buffer: copy, mime: opts.file.type || opts.format }, [copy]);
+  }
+
+  return transfer(out, [out.buffer]);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyRotation(img: any, degrees: number): any {
+  if (degrees === 0) return img;
+  if (degrees === 90 || degrees === 180 || degrees === 270) {
+    const angles: Record<number, string> = { 90: "d90", 180: "d180", 270: "d270" };
+    const rotated = img.rot(angles[degrees]);
+    img.delete();
+    return rotated;
+  }
+  const rotated = img.similarity({ angle: degrees });
+  img.delete();
+  return rotated;
+}
+
+type FlipMode = "horizontal" | "vertical" | "both" | "none";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyFlip(img: any, flip: FlipMode): any {
+  if (flip === "none") return img;
+  if (flip === "horizontal" || flip === "both") {
+    const flipped = img.fliphor();
+    img.delete();
+    img = flipped;
+  }
+  if (flip === "vertical" || flip === "both") {
+    const flipped = img.flipver();
+    img.delete();
+    img = flipped;
+  }
+  return img;
 }
 
 async function renderTextOverlayBuffer(options: WatermarkTextOptions): Promise<Uint8Array> {
@@ -531,7 +650,16 @@ const api = {
     const sizeSafe = policy.sizeSafe;
     const maxSizeMultiplier = policy.maxSizeMultiplier;
     const targetThreshold = Math.round(file.buffer.byteLength * maxSizeMultiplier);
-    const selectedQuality = options.quality ?? defaultQualityForMode(options.format, mode);
+
+    // When user provides quality via slider, apply "% of original" pipeline.
+    // When no quality is provided, fall back to mode-based absolute defaults.
+    const dims = await readDimensionsViaBitmap(file.buffer, file.type);
+    const srcW = dims?.width ?? 0;
+    const srcH = dims?.height ?? 0;
+    const userEffectiveQuality = options.quality != null
+      ? resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, file.type || "")
+      : undefined;
+    const selectedQuality = userEffectiveQuality ?? defaultQualityForMode(options.format, mode);
 
     // Fast path for common browser-decodable inputs to PNG.
     // This is significantly faster than vips for large JPG->PNG conversions in browser workers.
@@ -563,8 +691,8 @@ const api = {
       }
     }
 
-    const vips = await getVips(needsHeif(file, options.format));
-    let img = vips.Image.newFromBuffer(file.buffer);
+    const loaded = await loadImage(file, options.format);
+    let img = loaded.img;
 
     if (
       sizeSafe &&
@@ -716,118 +844,72 @@ const api = {
   },
 
   async compress(file: WorkerImageInput, options: CompressImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const t0 = performance.now();
-    const vips = await getVips(needsHeif(file, options.format));
-    const tInit = performance.now();
-    let img = vips.Image.newFromBuffer(file.buffer);
-    const origW = img.width;
-    const origH = img.height;
+    const { img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
+    let img = rawImg;
 
-    const target = fitWithinBox(origW, origH, options.maxWidth, options.maxHeight);
-
-    if (target.width !== origW || target.height !== origH) {
-      const scale = target.width / origW;
+    const target = fitWithinBox(srcW, srcH, options.maxWidth, options.maxHeight);
+    if (target.width !== srcW || target.height !== srcH) {
+      const scale = target.width / srcW;
       const resized = img.resize(scale, { kernel: "lanczos3" });
       img.delete();
       img = resized;
     }
 
-    const out = writeImage(img, options.format, options.quality);
-    img.delete();
-    const elapsed = performance.now() - t0;
-    console.log(
-      `[image-worker] compress: ${file.name} ${origW}x${origH}→${target.width}x${target.height} ` +
-      `Q=${options.quality} ${options.format} in ${elapsed.toFixed(0)}ms ` +
-      `(init=${(tInit - t0).toFixed(0)}ms, process=${(performance.now() - tInit).toFixed(0)}ms) ` +
-      `${(file.buffer.byteLength / 1024).toFixed(0)}KB→${(out.buffer.byteLength / 1024).toFixed(0)}KB`,
-    );
-
-    // Never produce a file larger than the original — return the input unchanged
-    if (out.buffer.byteLength >= file.buffer.byteLength) {
-      const copy = file.buffer.slice(0);
-      return transfer({ buffer: copy, mime: file.type || options.format }, [copy]);
-    }
-
-    return transfer(out, [out.buffer]);
+    const effectiveQuality = resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, inputMime);
+    return encodeAndTransfer({ img, format: options.format, quality: effectiveQuality, file, sizeGuard: true });
   },
 
   async resize(file: WorkerImageInput, options: ResizeImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const vips = await getVips(needsHeif(file, options.format) || inputMightBeHeic(file));
-    let img = vips.Image.newFromBuffer(file.buffer);
-    const srcW = img.width;
-    const srcH = img.height;
+    const { img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
+    let img = rawImg;
 
-    // Passthrough: if target dimensions match source and format matches input, return original buffer
-    const inputMime = file.type || "";
-    if (options.width === srcW && options.height === srcH && inputMime === options.format) {
+    // Passthrough: dimensions match, format matches, and no quality override
+    if (options.width === srcW && options.height === srcH && inputMime === options.format && options.quality == null) {
       img.delete();
       const copy = file.buffer.slice(0);
       return transfer({ buffer: copy, mime: options.format }, [copy]);
     }
 
-    const scaleX = options.width / srcW;
-    const scaleY = options.height / srcH;
-    const resized = img.resize(scaleX, { vscale: scaleY, kernel: "lanczos3" });
-    img.delete();
-    img = resized;
-    const out = writeImage(img, options.format, options.quality);
-    img.delete();
-    return transfer(out, [out.buffer]);
+    const effectiveQuality = resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, inputMime);
+
+    if (options.width !== srcW || options.height !== srcH) {
+      const scaleX = options.width / srcW;
+      const scaleY = options.height / srcH;
+      const resized = img.resize(scaleX, { vscale: scaleY, kernel: "lanczos3" });
+      img.delete();
+      img = resized;
+    }
+
+    return encodeAndTransfer({ img, format: options.format, quality: effectiveQuality, file });
   },
 
   async crop(file: WorkerImageInput, options: CropImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const vips = await getVips(needsHeif(file, options.format));
-    let img = vips.Image.newFromBuffer(file.buffer);
+    const { img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
+
+    const effectiveQuality = resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, inputMime);
 
     // Crop first — coordinates match what the user drew on the un-transformed image
     const { x, y, width, height } = options.area;
-    const cropped = img.extractArea(
+    let img = rawImg.extractArea(
       Math.round(x),
       Math.round(y),
       Math.max(1, Math.round(width)),
       Math.max(1, Math.round(height)),
     );
-    img.delete();
-    img = cropped;
+    rawImg.delete();
 
-    // Apply rotation after crop
-    const rot = options.rotation ?? 0;
-    if (rot !== 0) {
-      if (rot === 90 || rot === 180 || rot === 270) {
-        const angles: Record<number, string> = { 90: "d90", 180: "d180", 270: "d270" };
-        const rotated = img.rot(angles[rot]);
-        img.delete();
-        img = rotated;
-      } else {
-        const rotated = img.similarity({ angle: rot });
-        img.delete();
-        img = rotated;
-      }
-    }
+    img = applyRotation(img, options.rotation ?? 0);
+    img = applyFlip(img, options.flip ?? "none");
 
-    // Apply flip after crop
-    const flip = options.flip ?? "none";
-    if (flip === "horizontal" || flip === "both") {
-      const flipped = img.fliphor();
-      img.delete();
-      img = flipped;
-    }
-    if (flip === "vertical" || flip === "both") {
-      const flipped = img.flipver();
-      img.delete();
-      img = flipped;
-    }
-
-    const out = writeImage(img, options.format, options.quality);
-    img.delete();
-    return transfer(out, [out.buffer]);
+    return encodeAndTransfer({ img, format: options.format, quality: effectiveQuality, file });
   },
 
   async watermarkText(file: WorkerImageInput, options: WatermarkTextOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const loaded = await loadInputImageWithRetry(file);
-    const vips = loaded.vips;
-    let img = loaded.image;
+    const { vips, img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
 
+    const effectiveQuality = resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, inputMime);
+
+    let img = rawImg;
     if (!img.hasAlpha()) {
       const withAlpha = img.bandjoin(255);
       img.delete();
@@ -894,9 +976,7 @@ const api = {
     }
 
     overlay.delete();
-    const out = writeImage(composited, options.format, options.quality);
-    composited.delete();
-    return transfer(out, [out.buffer]);
+    return encodeAndTransfer({ img: composited, format: options.format, quality: effectiveQuality, file });
   },
 
   // -------------------------------------------------------------------------

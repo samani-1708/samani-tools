@@ -16,9 +16,9 @@ export const metadata: Metadata = createMetadata({
 export default function AboutPage() {
   return (
     <div className="container max-w-4xl mx-auto px-4 md:px-6 py-12 space-y-6">
-      <h1 className="text-3xl font-bold">About SamAni Tools</h1>
+      <h1 className="text-3xl font-bold">About 🤗 SamAni Tools</h1>
       <p className="text-muted-foreground">
-        SamAni Tools is a collection of practical PDF, image, and utility tools
+        🤗 SamAni Tools is a collection of practical PDF, image, and utility tools
         designed to run directly in your browser.
       </p>
       <p className="text-muted-foreground">
