@@ -14,6 +14,7 @@ import {
   LockIcon,
   LucideProps,
   MergeIcon,
+  PenLineIcon,
   PencilRuler,
   QrCodeIcon,
   RotateCcwIcon,
@@ -184,6 +185,15 @@ const ORGANIZE_PDF: ToolInfo = {
     "Delete, rotate, reorder, and add pages. Drag and drop to rearrange.",
 } as const;
 
+const EDIT_PDF: ToolInfo = {
+  title: "Edit PDF",
+  href: "/pdf/edit-pdf?section=tool&section=header",
+  icon: PenLineIcon,
+  theme: COLOR_TOKENS.LIME,
+  description:
+    "Annotate, draw, and highlight PDFs with a full-featured editor.",
+} as const;
+
 const PAGE_NUMBERS_PDF: ToolInfo = {
   title: "Page Numbers",
   href: "/pdf/page-numbers?section=tool&section=header",
@@ -207,6 +217,7 @@ export const PDF_TOOLS_HEADER: ToolInfo[] = [
   UNLOCK_PDF,
   ORGANIZE_PDF,
   PAGE_NUMBERS_PDF,
+  EDIT_PDF,
   // MORE_PDF_TOOLS,
 ] as const;
 
