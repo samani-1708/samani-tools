@@ -136,6 +136,11 @@ export default async function RootLayout(props: RootLayoutProps) {
         `}</Script>
         <BuyMeACoffeeFloatingScript />
       </body>
+      {/* @ts-ignore */}
+      <amp-auto-ads
+        type="adsense"
+        data-ad-client="ca-pub-2994639271732289"
+      />
     </html>
   );
 }
