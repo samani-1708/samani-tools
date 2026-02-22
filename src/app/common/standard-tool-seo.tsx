@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRightIcon, CheckIcon, ChevronDownIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AdsenseSlot } from "@/app/common/adsense-slot";
 
 export type StandardStep = {
   title: string;
@@ -105,6 +106,8 @@ export function StandardToolSeoSections(props: StandardToolSeoProps) {
             </div>
           )}
         </header>
+
+        <AdsenseSlot className="max-w-4xl mx-auto" />
 
         <section className="space-y-4 text-center">
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.01em] text-balance">
@@ -212,6 +215,11 @@ export function StandardToolSeoSections(props: StandardToolSeoProps) {
             ))}
           </div>
         </section>
+
+        <AdsenseSlot
+          className="max-w-4xl mx-auto"
+          slotId={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PAGE_COPY_MID}
+        />
 
         <section className="space-y-5">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-[-0.01em] text-center text-balance">

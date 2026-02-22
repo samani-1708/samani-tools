@@ -4,7 +4,9 @@ type AdsenseScriptProps = {
 };
 
 export function AdsenseScript({ enabled, clientId }: AdsenseScriptProps) {
-  if (!enabled || !clientId) {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!isProduction || !enabled || !clientId) {
     return null;
   }
 
@@ -16,4 +18,3 @@ export function AdsenseScript({ enabled, clientId }: AdsenseScriptProps) {
     />
   );
 }
-
