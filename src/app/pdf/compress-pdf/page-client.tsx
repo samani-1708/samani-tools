@@ -14,10 +14,11 @@ import {
 } from "@/components/ui/select";
 import { DownloadIcon, Loader2Icon, RotateCcwIcon } from "lucide-react";
 import dynamic from "next/dynamic";
+import { pdfjs } from "react-pdf";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { usePDFUtils } from "../common/use-pdf-utils.hooks";
-import { FileObject } from "../common/types";
+import { FileObject, ImageInput } from "../common/types";
 import { PDFToolLayout } from "../common/layouts/pdf-tool-layout";
 import { ProcessingButton } from "../common/layouts/processing-button";
 
@@ -26,7 +27,9 @@ const ViewPDF = dynamic(() => import("@/app/common/pdf-viewer/pdf-viewer"), {
   loading: () => <PDFStatePending header="Loading" subHeader="" />,
 });
 
-type CompressionMode = "relaxed" | "strict";
+type CompressionMode = "relaxed" | "strict" | "aggressive-raster";
+
+pdfjs.GlobalWorkerOptions.workerSrc = "/js/pdf-worker/4.8.69/pdf-worker.min.js";
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -76,7 +79,57 @@ export function PageClient() {
         buffer: buffer,
       };
 
-      const compressedBytes = await utils.compress(fileObject, { mode: compressionMode,  });
+      let compressedBytes: Uint8Array;
+      if (compressionMode === "aggressive-raster") {
+        const loadingTask = pdfjs.getDocument({
+          data: new Uint8Array(buffer),
+        });
+        const doc = await loadingTask.promise;
+        const imageInputs: ImageInput[] = [];
+
+        for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
+          const page = await doc.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) continue;
+
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          const jpegBlob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.72),
+          );
+          if (!jpegBlob) continue;
+          const imageBuffer = await jpegBlob.arrayBuffer();
+          imageInputs.push({
+            buffer: imageBuffer,
+            type: "image/jpeg",
+          });
+        }
+
+        if (imageInputs.length === 0) {
+          throw new Error("Unable to rasterize pages for aggressive compression");
+        }
+
+        const rebuiltPdf = await utils.embedImages(imageInputs, {
+          orientation: "portrait",
+          pageSize: "natural",
+          margin: "none",
+        });
+
+        const rebuiltBuffer = rebuiltPdf.buffer.slice(
+          rebuiltPdf.byteOffset,
+          rebuiltPdf.byteOffset + rebuiltPdf.byteLength,
+        ) as ArrayBuffer;
+        compressedBytes = await utils.compress(
+          { ...fileObject, buffer: rebuiltBuffer },
+          { mode: "strict" },
+        );
+      } else {
+        compressedBytes = await utils.compress(fileObject, { mode: compressionMode });
+      }
 
       if (!compressedBytes) {
         throw new Error("Compression failed");
@@ -197,8 +250,17 @@ export function PageClient() {
               <SelectContent>
                 <SelectItem value="relaxed">Relaxed (Better Quality)</SelectItem>
                 <SelectItem value="strict">Strict (Smaller Size)</SelectItem>
+                <SelectItem value="aggressive-raster">
+                  Aggressive (Smallest, flattens text/vector)
+                </SelectItem>
               </SelectContent>
             </Select>
+            {compressionMode === "aggressive-raster" && (
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                Aggressive mode converts pages to compressed images, then re-compresses.
+                This usually shrinks size more, but text/selectability and vector precision may be lost.
+              </p>
+            )}
           </div>
 
           {/* Compression results */}
@@ -257,11 +319,10 @@ export function PageClient() {
           <Button
             variant="outline"
             onClick={handleReset}
-            className="w-full"
+            className="h-10 w-10 p-0"
             aria-label="Start over"
           >
-            Start over
-            <RotateCcwIcon className="w-4 h-4 ml-2" />
+            <RotateCcwIcon className="w-4 h-4" />
           </Button>
         ) : undefined
       }

@@ -4,6 +4,7 @@ import {
   CropOptions,
   DecryptOptions,
   EncryptOptions,
+  ExtractImagesOptions,
   FileObject,
   ImageInput,
   ImageToPdfOptions,
@@ -16,13 +17,14 @@ import {
 } from "./types";
 import { FileUploaded } from "@/app/common/hooks";
 import { PageDimensionInfo } from "./pdf-lib";
-import PDFCpuUtils from "./pdf-cpu";
+import PDFCpuUtils, { ExtractedAsset } from "./pdf-cpu";
 
 // Extended interface for pdfcpu methods
 interface IPdfCPUExtended extends IPdfUtilsLib {
   rotate(buffer: ArrayBuffer, options: RotateOptions): Promise<Uint8Array>;
   encrypt(buffer: ArrayBuffer, options: EncryptOptions): Promise<Uint8Array>;
   decrypt(buffer: ArrayBuffer, options: DecryptOptions): Promise<Uint8Array>;
+  extractImages(file: FileObject, options?: ExtractImagesOptions): Promise<ExtractedAsset[]>;
 }
 
 // Extended interface for pdf-lib worker methods
@@ -133,6 +135,11 @@ export function usePDFUtils() {
       async compress(file: FileObject, options?: CompressOptions) {
         await loadPdfCPU();
         return pdfCPU.current!.compress(file, options);
+      },
+
+      async extractImages(file: FileObject, options?: ExtractImagesOptions): Promise<ExtractedAsset[]> {
+        await loadPdfCPU();
+        return (pdfCPU.current as IPdfCPUExtended).extractImages(file, options);
       },
 
       watermarkText(file: FileObject, options: TextWatermarkOptions) {

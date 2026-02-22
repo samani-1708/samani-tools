@@ -1,0 +1,206 @@
+[
+  {
+    "name": "merge-pdf",
+    "label": "Merge PDF",
+    "description": "Merge multiple PDF files into one output in selected order.",
+    "inputCardinality": { "min": 2, "max": null },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["merge", "combine", "join", "append"],
+    "executableInChatPdf": true,
+    "controls": [
+      { "key": "files", "type": "File[]", "required": true, "description": "Ordered source PDF files" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "split-pdf",
+    "label": "Split PDF",
+    "description": "Split a single PDF by ranges, by group count, or by specific pages.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["split", "extract pages", "separate pages"],
+    "executableInChatPdf": true,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "mode", "type": "RANGE|N_PER_PAGE|BY_PAGE", "required": false, "description": "Split mode" },
+      { "key": "ranges", "type": "string[]", "required": false, "description": "Ranges like 1-3,5,8-10" },
+      { "key": "groupCount", "type": "number", "required": false, "description": "Number of output groups for N_PER_PAGE mode" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output filename (.pdf or .zip)" }
+    ]
+  },
+  {
+    "name": "compress-pdf",
+    "label": "Compress PDF",
+    "description": "Compress one PDF with relaxed, strict, or aggressive-raster mode.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["compress", "reduce size", "smaller pdf"],
+    "executableInChatPdf": true,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "mode", "type": "relaxed|strict|aggressive-raster", "required": false, "description": "Compression mode" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "rotate-pdf",
+    "label": "Rotate PDF",
+    "description": "Rotate a full PDF or selected pages.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["rotate", "turn", "orientation"],
+    "executableInChatPdf": true,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "rotation", "type": "number", "required": false, "description": "90, -90, 180, 270" },
+      { "key": "pages", "type": "string[]", "required": false, "description": "Optional target ranges" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "crop-pdf",
+    "label": "Crop PDF",
+    "description": "Crop one PDF by percentage box, all pages or current page.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["crop", "trim margins", "cut margins"],
+    "executableInChatPdf": false,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "applyMode", "type": "all|current", "required": false, "description": "Apply crop to all pages or current page" },
+      { "key": "cropPercent", "type": "{x,y,width,height}", "required": true, "description": "Crop box in percent space" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "watermark-pdf",
+    "label": "Watermark PDF",
+    "description": "Apply text/image watermark with position, opacity, rotation, and scale.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["watermark", "stamp", "brand"],
+    "executableInChatPdf": false,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "type", "type": "text|image", "required": true, "description": "Watermark mode" },
+      { "key": "text", "type": "string", "required": false, "description": "Text value for text watermark" },
+      { "key": "fontFamily", "type": "Helvetica|Times-Roman|Courier", "required": false, "description": "Font family for text mode" },
+      { "key": "fontSize", "type": "number", "required": false, "description": "Text size" },
+      { "key": "color", "type": "string", "required": false, "description": "Text color (hex/rgb)" },
+      { "key": "position", "type": "position", "required": false, "description": "Watermark position preset" },
+      { "key": "opacity", "type": "number", "required": false, "description": "Opacity 0..1" },
+      { "key": "rotation", "type": "number", "required": false, "description": "Rotation degrees" },
+      { "key": "scale", "type": "number", "required": false, "description": "Relative scale" },
+      { "key": "layer", "type": "over|under", "required": false, "description": "Overlay or underlay layer" },
+      { "key": "imageFile", "type": "File", "required": false, "description": "Image file for image watermark mode" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "lock-pdf",
+    "label": "Lock PDF",
+    "description": "Encrypt one PDF with owner/user passwords and permissions.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["lock", "encrypt", "password protect"],
+    "executableInChatPdf": false,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "ownerPassword", "type": "string", "required": true, "description": "Owner password" },
+      { "key": "userPassword", "type": "string", "required": false, "description": "User/open password" },
+      { "key": "mode", "type": "aes|rc4", "required": false, "description": "Encryption mode" },
+      { "key": "keyLength", "type": "40|128", "required": false, "description": "WASM-supported key length" },
+      { "key": "permissions", "type": "none|print|all", "required": false, "description": "Permission profile" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "unlock-pdf",
+    "label": "Unlock PDF",
+    "description": "Remove PDF password protection.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["unlock", "decrypt", "remove password"],
+    "executableInChatPdf": false,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "password", "type": "string", "required": true, "description": "Password to unlock source PDF" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "page-numbers",
+    "label": "Page Numbers",
+    "description": "Add page numbers with layout and formatting options.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["page numbers", "number pages", "paginate"],
+    "executableInChatPdf": false,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "position", "type": "top-left|top-right|bottom-left|bottom-right", "required": false, "description": "Number position" },
+      { "key": "format", "type": "string", "required": false, "description": "Format with {n}/{p}" },
+      { "key": "startNumber", "type": "number", "required": false, "description": "Starting number" },
+      { "key": "startPage", "type": "number", "required": false, "description": "0-based start page" },
+      { "key": "fontSize", "type": "number", "required": false, "description": "Font size" },
+      { "key": "color", "type": "string", "required": false, "description": "Text color" },
+      { "key": "fontFamily", "type": "Helvetica|Times-Roman|Courier", "required": false, "description": "Font family" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "organize-pdf",
+    "label": "Organize PDF",
+    "description": "Reorder, rotate, delete, and insert blank pages.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["organize", "reorder pages", "delete pages", "insert blank page"],
+    "executableInChatPdf": false,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "operations", "type": "operation[]", "required": true, "description": "Sequence of page operations" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "image-to-pdf",
+    "label": "Image to PDF",
+    "description": "Convert multiple images to a single PDF.",
+    "inputCardinality": { "min": 1, "max": null },
+    "acceptedFileTypes": ["image/png", "image/jpeg", "image/*"],
+    "aliases": ["image to pdf", "convert images", "jpg to pdf", "png to pdf"],
+    "executableInChatPdf": true,
+    "controls": [
+      { "key": "files", "type": "File[]", "required": true, "description": "Ordered image files" },
+      { "key": "pageSize", "type": "a4|natural|us-letter", "required": false, "description": "Target page size" },
+      { "key": "margin", "type": "none|small|large", "required": false, "description": "Image margin mode" },
+      { "key": "outputName", "type": "string", "required": false, "description": "Output file name" }
+    ]
+  },
+  {
+    "name": "extract-content",
+    "label": "Extract Content",
+    "description": "Extract text, semantic lines, and embedded assets from PDF.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["extract content", "extract text", "ocr pdf", "pdf to markdown"],
+    "executableInChatPdf": false,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" },
+      { "key": "useOcrFallback", "type": "boolean", "required": false, "description": "Enable OCR fallback" },
+      { "key": "ocrMode", "type": "speed|balanced|accuracy|rigorous", "required": false, "description": "OCR quality profile" }
+    ]
+  },
+  {
+    "name": "edit-pdf",
+    "label": "Edit PDF",
+    "description": "Open embedded PDF.js editor workflow.",
+    "inputCardinality": { "min": 1, "max": 1 },
+    "acceptedFileTypes": ["application/pdf"],
+    "aliases": ["edit", "annotate", "draw", "highlight"],
+    "executableInChatPdf": false,
+    "controls": [
+      { "key": "file", "type": "File", "required": true, "description": "Source PDF file" }
+    ]
+  }
+]

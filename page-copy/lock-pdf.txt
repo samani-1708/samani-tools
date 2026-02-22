@@ -1,0 +1,118 @@
+Secure your PDF documents effortlessly with our free, simple, and ad-free web application. Encrypt your files using robust AES 128-bit encryption and add password protection in just a few clicks. No file size restrictions, no watermarks.
+* 		TLS encryption for secure file processingPassword-protect PDF files with encryptionQuick to protect, near impossible to break
+￼
+Reliable PDF Password Protection
+Securely share your sensitive information by encrypting your files and requiring a password for access. This is the most effective way to prevent unauthorized access to your confidential data.
+￼
+No Data Retention
+Your files are always safe with Smallpdf. We use TLS encryption for all data transfers and permanently delete files after one hour. We never save your document passwords.
+￼
+On Mac, Windows, and Linux
+Smallpdf is a web application that can be accessed on any device with a web browser, including Mac, Windows, Linux, and mobile devices. Simply open your browser and add a document open password to your PDF!
+￼
+Secure Encryption for Maximum Safety
+Some PDF passwords can be hacked easily. With our AES 128-bit encryption, it would take thousands of years to crack your password with a regular computer.
+￼
+Password Strength for Added Security
+The more complex your password, the safer your file is from unauthorized changes. We recommend using a non-dictionary word of at least 7 characters with numbers, capital letters, and symbols.
+￼
+Password-Protection in the Cloud
+You don't need any software to use Smallpdf's online services. You can protect your PDF with a password by simply uploading it, choosing a strong password, and then downloading the password-protected PDF.
+￼
+How To Password-Protect a PDF Document:
+* 		Import or drag & drop your file to our Protect PDF tool.Type and confirm the strong password you’d like to use.Click “Protect” to add the password to your PDF.Edit the PDF with our other tools if desired.Download your password-protected PDF when ready—done!
+
+
+
+
+All the PDF tools you need, now 100% free
+Enjoy unlimited PDF tools usage in India with a free account on Acrobat.com. No subscription or credit card required. Excludes AI features.
+Create a free account
+How to password protect a PDF file
+Follow these steps on how to password-protect your PDF files online for free:
+￼
+* 		Click on the "Select a file" button above or drag and drop a PDF file into the drop zone.Enter a strong password and retype it to confirm.Click on "Set password".Once done, you can download the password-protected PDF document or sign in to share it with others.
+Secure PDFs with our password protection tool
+￼
+Add PDF password lock for free
+Add PDF password protection with the Adobe Acrobat online tool for free. By adding a password to your PDF file, you can limit access and only allow people with the password to view the file content.
+￼
+Maintain confidentiality of content
+By password-protecting a document, you can make sure that sensitive data like birth dates or medical information is accessible only to approved people and remains unavailable to everyone else.
+￼
+Restrict unauthorised access
+When you password protect a PDF, you control file access. For someone to open the file, you'll need to give them the password, keeping your content private and safe.
+￼
+Strengthen your password
+At Adobe, we take security protocols very seriously. To ensure your file is well protected, we’ll let you know if your password is weak, medium or strong.
+￼
+Eliminate the need to install software
+Our compatible Acrobat online PDF tools work in any browser, including Microsoft Edge and Google Chrome. Just drag and drop a file to get started — there’s no need to install any additional software.
+￼
+Choose trusted PDF security with Adobe
+As the inventor of the PDF file format, Adobe delivers document security you can rely on. Password-protect your PDFs with confidence and try our services today.
+When to use the password protection tool
+Protecting confidential business reports and financial documents
+Safeguard your private financial and business reports using Adobe Acrobat's password protection tool. You can prevent unwanted access and practice data privacy by creating a strong password of your PDF bank statements, invoices, and more.
+Securing personal documents
+You can protect your personal information, like tax forms, medical records, and Aadhaar cards, by utilising robust encryption features. The password protection feature offers a dependable method of safeguarding your most confidential documents.
+Restrict access to sensitive legal agreements
+Restrict access to legal documents. Make a file password protected by following the steps above.
+Questions about password-protected PDFs? We have answers.
+How do I choose a strong password?
+
+Choosing a strong password keeps your content secure and prevents unauthorised access. To create a strong password, increase the length of the password and add a mix of letters (both upper and lower case) and numbers. The addition of symbols can also increase password strength. When you enter passwords, avoid using personal information or common words that can be guessed easily. It is best to use combination passwords (a mix of alphabets, numerals, and a special character) as they are difficult to crack.
+How do I unlock a password-protected PDF?
+
+When you open a PDF protected by a password, a dialogue box will appear that will prompt you to enter the password before you are able to see the file content. Type in the document open password and click OK to open the file. As a document owner, you can also remove the password with an Adobe Acrobat Pro trial or subscription.
+What is the difference between password protection and encryption?
+
+When you protect documents with a password, people who enter the correct password can access the file or folder. A stronger security method is encryption, with common types being 128-bit key or 256-bit AES encryption. Encryption turns document content into unreadable cipher text. To decrypt the document, authorised users need a key, which is typically a password or a digital certificate.
+When you use the Acrobat online tool to add password protection to a PDF file, it encrypts the file for added security. If you need more advanced PDF security, you can try Adobe Acrobat Pro for free for seven days for Mac or Windows. The seven-day free trial lets you add encryption options, encrypt PDFs with certificates or manage security settings and permissions to restrict editing, printing or copying. Acrobat Pro also lets you edit PDFs, organise PDF pages and convert PDFs to and from Microsoft Office apps, including Microsoft Word documents, PowerPoint presentations and Excel spreadsheets.
+Can I remove or change the password on a protected PDF?
+
+Yes, you may remove or change the PDF password lock anytime you want as long as you own it.
+
+Easily remove password protection from PDFs online in seconds. Unlock PDFs for simpler access, editing, and sharing. Free to try. No signup required.
+* 		Unlock PDFs on Mac, Windows, iOS, Android, and LinuxGDPR compliant and ISO/IEC 27001 certifiedTrusted by 1.7 billion people since 2013
+￼
+Remove PDF Passwords in Seconds
+Easily remove password protection from PDFs in just a few clicks. Simply upload your file, enter the password, and download your unrestricted document.
+￼
+Unlock Almost Any PDF
+Even if you don’t know the owner's password, we may still be able to unlock it if it’s not a strongly encrypted file.
+￼
+Works on Any Device
+Unlock PDFs online from any browser, on Mac, Windows, iOS, or Android. No software installation required—just upload, unlock, and download.
+￼
+30+ Tools for Every PDF Task
+Need to do more than just unlock PDFs? Edit, convert, merge, and compress your documents with our complete suite of 30+ PDF tools.
+￼
+Safe From Start To Finish
+Your documents are protected with TLS encryption, and all files are automatically deleted after one hour. Rest assured your documents are for your eyes only.
+￼
+Certified Security & GDPR Compliance
+Smallpdf is ISO/IEC 27001 certified and fully GDPR compliant. We meet the highest privacy and security standards, so your data stays safe and in your control.
+￼
+How To Unlock a PDF Online
+* 		Import or drag & drop your locked PDF file into our unlock tool.Type the password to access your PDF.Edit the PDF with our other online tools if needed.Download or share your unlocked PDF when ready—done!
+
+
+Linux MAC iPhone Android
+How to unlock PDF files
+Select your protected files that you want to remove the password from or drop them into the file box and start the process. A few seconds later you can download your unlocked PDF files.
+ 
+Password for unlocking
+The password enables our system to read the protected PDF file and to convert it to an unlocked one. This remove the password protection from the file.
+ 
+Easy to use
+PDF24 makes it as easy as possible for you to remove the password from PDF files. No installation is required. Simply select your files and start the unlocking.
+ 
+Supports your system
+There are no special system requirements to remove the password from PDF files. This PDF unlocking app functions under all common operating systems and browsers.
+ 
+No installation required
+You do not need to download and install any software. The password removal tool runs in the cloud on our servers. The app does not consume resources from your computer.
+ 
+Security is important to us
+Your files are no longer than necessary on our server. Your files and results will be deleted from our server after a short period of time.

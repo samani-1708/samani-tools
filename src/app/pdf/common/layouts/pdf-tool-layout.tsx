@@ -26,7 +26,7 @@ interface PDFToolLayoutProps {
   };
   sidebarTitle: string;
   sidebarIcon?: React.ReactNode;
-  sidebarWidth?: "sm" | "md";
+  sidebarWidth?: "sm" | "md" | "lg";
   content: React.ReactNode;
   controls: React.ReactNode;
   /** Primary action shown in mobile bottom bar + sidebar + sheet */
@@ -67,7 +67,12 @@ export function PDFToolLayout({
     );
   }
 
-  const widthClass = sidebarWidth === "sm" ? "lg:w-80" : "lg:w-96";
+  const widthClass =
+    sidebarWidth === "sm"
+      ? "lg:w-80"
+      : sidebarWidth === "lg"
+        ? "lg:w-[32rem]"
+        : "lg:w-96";
 
   return (
     <div
@@ -88,14 +93,20 @@ export function PDFToolLayout({
           "hidden lg:flex border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-6 flex-col overflow-auto"
         )}
       >
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          {sidebarIcon}
-          {sidebarTitle}
-        </h2>
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold flex items-center gap-2 min-w-0">
+            {sidebarIcon}
+            <span className="truncate">{sidebarTitle}</span>
+          </h2>
+          {secondaryActions ? (
+            <div className="ml-auto shrink-0">
+              {secondaryActions}
+            </div>
+          ) : null}
+        </div>
         <div className="flex-1 flex flex-col">{controls}</div>
         <div className="mt-6 space-y-3">
           {actions}
-          {secondaryActions}
         </div>
       </div>
 

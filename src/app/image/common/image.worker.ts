@@ -72,6 +72,43 @@ type WorkerBatchResult =
   | { id: string; status: "error"; error: string };
 
 // ---------------------------------------------------------------------------
+// Composable pipeline types
+// ---------------------------------------------------------------------------
+
+type PipelineOp =
+  | { type: "clamp"; maxWidth?: number; maxHeight?: number }
+  | { type: "resize"; width: number; height: number }
+  | {
+      type: "crop";
+      area: { x: number; y: number; width: number; height: number };
+      rotation?: number;
+      flip?: "horizontal" | "vertical" | "both" | "none";
+    }
+  | {
+      type: "watermark";
+      text: string;
+      fontSize: number;
+      opacity: number;
+      color: string;
+      position: ImageWatermarkPosition;
+      rotation?: number;
+    };
+
+interface PipelineOptions {
+  /** Ordered list of transform operations applied to the decoded image. */
+  ops: PipelineOp[];
+  format: EncodableImageFormat;
+  /**
+   * Slider fraction 0–1. Resolved via resolveEffectiveQuality:
+   *   outputQuality = estimatedInputQuality × sliderFraction
+   * Leave undefined to use the format default.
+   */
+  quality?: number;
+  /** When true, returns the original file unchanged if output size >= input size. */
+  sizeGuard?: boolean;
+}
+
+// ---------------------------------------------------------------------------
 // Runtime capability detection
 // ---------------------------------------------------------------------------
 
@@ -411,6 +448,41 @@ async function encodeViaCanvas(
   }
 }
 
+/**
+ * Canvas-based encode that skips the input MIME check — used as a fallback
+ * when vips cannot handle the input (e.g. HEIC on browsers with native HEIC
+ * support via createImageBitmap).
+ */
+async function encodeViaCanvasRaw(
+  file: WorkerImageInput,
+  targetMime: EncodableImageFormat,
+  quality?: number,
+): Promise<{ buffer: ArrayBuffer; mime: string } | null> {
+  try {
+    const blob = new Blob([file.buffer], { type: file.type || "application/octet-stream" });
+    const bmp = await createImageBitmap(blob);
+    const canvas = new OffscreenCanvas(bmp.width, bmp.height);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bmp.close();
+      return null;
+    }
+    ctx.drawImage(bmp, 0, 0);
+    bmp.close();
+    const outBlob = await canvas.convertToBlob({
+      type: targetMime,
+      quality: quality == null ? undefined : Math.max(0.1, Math.min(1, quality)),
+    });
+    if (outBlob.type && outBlob.type !== targetMime) {
+      return null;
+    }
+    const outBuffer = await outBlob.arrayBuffer();
+    return { buffer: outBuffer, mime: outBlob.type || targetMime };
+  } catch {
+    return null;
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function writeImage(img: any, format: EncodableImageFormat, quality?: number): { buffer: ArrayBuffer; mime: string } {
   const suffix = mimeToSuffix(format);
@@ -462,7 +534,7 @@ interface LoadedImage {
  * and returns source dimensions + mime upfront.
  */
 async function loadImage(file: WorkerImageInput, outputFormat: EncodableImageFormat): Promise<LoadedImage> {
-  const heif = needsHeif(file, outputFormat) || inputMightBeHeic(file);
+  const heif = needsHeif(file, outputFormat);
   let vips;
   let img;
   try {
@@ -534,7 +606,162 @@ function applyFlip(img: any, flip: FlipMode): any {
   return img;
 }
 
-async function renderTextOverlayBuffer(options: WatermarkTextOptions): Promise<Uint8Array> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function applyWatermarkOp(
+  vips: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  imgIn: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  op: Extract<PipelineOp, { type: "watermark" }>,
+): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  let img = imgIn;
+  if (!img.hasAlpha()) {
+    const withAlpha = img.bandjoin(255);
+    img.delete();
+    img = withAlpha;
+  }
+
+  const overlayBuffer = await renderTextOverlayBuffer(op);
+  let overlay = vips.Image.newFromBuffer(overlayBuffer);
+  if ((op.rotation ?? 0) !== 0) {
+    const rotated = overlay.similarity({ angle: op.rotation });
+    overlay.delete();
+    overlay = rotated;
+  }
+
+  const margin = Math.max(12, Math.round(op.fontSize * 0.6));
+  let posX = 0;
+  let posY = 0;
+  switch (op.position) {
+    case "top-left":     posX = margin; posY = margin; break;
+    case "top-center":   posX = Math.round((img.width - overlay.width) / 2); posY = margin; break;
+    case "top-right":    posX = img.width - overlay.width - margin; posY = margin; break;
+    case "middle-left":  posX = margin; posY = Math.round((img.height - overlay.height) / 2); break;
+    case "middle-right": posX = img.width - overlay.width - margin; posY = Math.round((img.height - overlay.height) / 2); break;
+    case "bottom-left":  posX = margin; posY = img.height - overlay.height - margin; break;
+    case "bottom-center": posX = Math.round((img.width - overlay.width) / 2); posY = img.height - overlay.height - margin; break;
+    case "bottom-right": posX = img.width - overlay.width - margin; posY = img.height - overlay.height - margin; break;
+    case "center":
+    default:
+      posX = Math.round((img.width - overlay.width) / 2);
+      posY = Math.round((img.height - overlay.height) / 2);
+      break;
+  }
+
+  let composited;
+  if (op.position === "mosaic") {
+    let current = img;
+    const tileW = current.width / 3;
+    const tileH = current.height / 3;
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = 0; col < 3; col += 1) {
+        const centerX = Math.round(col * tileW + tileW / 2);
+        const centerY = Math.round(row * tileH + tileH / 2);
+        const x = Math.round(centerX - overlay.width / 2);
+        const y = Math.round(centerY - overlay.height / 2);
+        const next = current.composite2(overlay, "over", { x, y });
+        if (current !== img) current.delete();
+        current = next;
+      }
+    }
+    composited = current;
+    if (img !== composited) img.delete();
+  } else {
+    composited = img.composite2(overlay, "over", { x: posX, y: posY });
+    img.delete();
+  }
+
+  overlay.delete();
+  return composited;
+}
+
+/**
+ * Single decode → apply ops in order → encode pipeline used by all image tools.
+ * Centralises HEIC/HEIF detection, quality resolution, and error handling.
+ *
+ * Quality contract: outputQuality = estimatedInputQuality × sliderFraction
+ */
+async function runPipeline(
+  file: WorkerImageInput,
+  options: PipelineOptions,
+): Promise<{ buffer: ArrayBuffer; mime: string }> {
+  const { vips, img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
+
+  // Quality resolved once for the whole pipeline
+  const effectiveQuality = resolveEffectiveQuality(
+    options.quality,
+    file.buffer.byteLength,
+    srcW,
+    srcH,
+    inputMime,
+  );
+
+  // Passthrough: single resize op, same dims, same format, no quality change
+  if (
+    options.ops.length === 1 &&
+    options.ops[0].type === "resize" &&
+    options.ops[0].width === srcW &&
+    options.ops[0].height === srcH &&
+    inputMime === options.format &&
+    options.quality == null
+  ) {
+    rawImg.delete();
+    const copy = file.buffer.slice(0);
+    return transfer({ buffer: copy, mime: options.format }, [copy]);
+  }
+
+  let img = rawImg;
+
+  for (const op of options.ops) {
+    switch (op.type) {
+      case "clamp": {
+        const target = fitWithinBox(img.width, img.height, op.maxWidth, op.maxHeight);
+        if (target.width !== img.width || target.height !== img.height) {
+          const scale = target.width / img.width;
+          const resized = img.resize(scale, { kernel: "lanczos3" });
+          img.delete();
+          img = resized;
+        }
+        break;
+      }
+      case "resize": {
+        if (op.width !== img.width || op.height !== img.height) {
+          const scaleX = op.width / img.width;
+          const scaleY = op.height / img.height;
+          const resized = img.resize(scaleX, { vscale: scaleY, kernel: "lanczos3" });
+          img.delete();
+          img = resized;
+        }
+        break;
+      }
+      case "crop": {
+        const { x, y, width, height } = op.area;
+        const cropped = img.extractArea(
+          Math.round(x),
+          Math.round(y),
+          Math.max(1, Math.round(width)),
+          Math.max(1, Math.round(height)),
+        );
+        img.delete();
+        img = cropped;
+        img = applyRotation(img, op.rotation ?? 0);
+        img = applyFlip(img, op.flip ?? "none");
+        break;
+      }
+      case "watermark": {
+        img = await applyWatermarkOp(vips, img, op);
+        break;
+      }
+    }
+  }
+
+  return encodeAndTransfer({ img, format: options.format, quality: effectiveQuality, file, sizeGuard: options.sizeGuard });
+}
+
+async function renderTextOverlayBuffer(options: {
+  text: string;
+  fontSize: number;
+  opacity: number;
+  color: string;
+}): Promise<Uint8Array> {
   const [r, g, b] = hexToRgb(options.color);
   const alpha = Math.max(0, Math.min(1, options.opacity / 100));
   const margin = Math.max(12, Math.round(options.fontSize * 0.6));
@@ -764,7 +991,19 @@ const api = {
       }
       out = success;
     } else {
-      out = writeImage(img, options.format, selectedQuality);
+      try {
+        out = writeImage(img, options.format, selectedQuality);
+      } catch (vipsErr) {
+        // HEIC/HEIF inputs can crash the vips encoder (missing codec support).
+        // Fall back to browser-native decode via createImageBitmap + canvas encode.
+        if (inputMightBeHeic(file)) {
+          img.delete();
+          const canvasResult = await encodeViaCanvasRaw(file, options.format, selectedQuality);
+          if (canvasResult) return transfer(canvasResult, [canvasResult.buffer]);
+          throw new Error("This HEIC file cannot be converted in your browser. Try Safari on macOS/iOS, or convert the file to JPG/PNG first.");
+        }
+        throw vipsErr;
+      }
     }
 
     if (
@@ -844,139 +1083,48 @@ const api = {
   },
 
   async compress(file: WorkerImageInput, options: CompressImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const { img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
-    let img = rawImg;
-
-    const target = fitWithinBox(srcW, srcH, options.maxWidth, options.maxHeight);
-    if (target.width !== srcW || target.height !== srcH) {
-      const scale = target.width / srcW;
-      const resized = img.resize(scale, { kernel: "lanczos3" });
-      img.delete();
-      img = resized;
-    }
-
-    const effectiveQuality = resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, inputMime);
-    return encodeAndTransfer({ img, format: options.format, quality: effectiveQuality, file, sizeGuard: true });
+    return runPipeline(file, {
+      ops: [{ type: "clamp", maxWidth: options.maxWidth, maxHeight: options.maxHeight }],
+      format: options.format,
+      quality: options.quality,
+      sizeGuard: true,
+    });
   },
 
   async resize(file: WorkerImageInput, options: ResizeImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const { img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
-    let img = rawImg;
-
-    // Passthrough: dimensions match, format matches, and no quality override
-    if (options.width === srcW && options.height === srcH && inputMime === options.format && options.quality == null) {
-      img.delete();
-      const copy = file.buffer.slice(0);
-      return transfer({ buffer: copy, mime: options.format }, [copy]);
-    }
-
-    const effectiveQuality = resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, inputMime);
-
-    if (options.width !== srcW || options.height !== srcH) {
-      const scaleX = options.width / srcW;
-      const scaleY = options.height / srcH;
-      const resized = img.resize(scaleX, { vscale: scaleY, kernel: "lanczos3" });
-      img.delete();
-      img = resized;
-    }
-
-    return encodeAndTransfer({ img, format: options.format, quality: effectiveQuality, file });
+    return runPipeline(file, {
+      ops: [{ type: "resize", width: options.width, height: options.height }],
+      format: options.format,
+      quality: options.quality,
+    });
   },
 
   async crop(file: WorkerImageInput, options: CropImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const { img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
-
-    const effectiveQuality = resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, inputMime);
-
-    // Crop first — coordinates match what the user drew on the un-transformed image
-    const { x, y, width, height } = options.area;
-    let img = rawImg.extractArea(
-      Math.round(x),
-      Math.round(y),
-      Math.max(1, Math.round(width)),
-      Math.max(1, Math.round(height)),
-    );
-    rawImg.delete();
-
-    img = applyRotation(img, options.rotation ?? 0);
-    img = applyFlip(img, options.flip ?? "none");
-
-    return encodeAndTransfer({ img, format: options.format, quality: effectiveQuality, file });
+    return runPipeline(file, {
+      ops: [{ type: "crop", area: options.area, rotation: options.rotation, flip: options.flip }],
+      format: options.format,
+      quality: options.quality,
+    });
   },
 
   async watermarkText(file: WorkerImageInput, options: WatermarkTextOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
-    const { vips, img: rawImg, srcW, srcH, inputMime } = await loadImage(file, options.format);
+    return runPipeline(file, {
+      ops: [{
+        type: "watermark",
+        text: options.text,
+        fontSize: options.fontSize,
+        opacity: options.opacity,
+        color: options.color,
+        position: options.position,
+        rotation: options.rotation,
+      }],
+      format: options.format,
+      quality: options.quality,
+    });
+  },
 
-    const effectiveQuality = resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, inputMime);
-
-    let img = rawImg;
-    if (!img.hasAlpha()) {
-      const withAlpha = img.bandjoin(255);
-      img.delete();
-      img = withAlpha;
-    }
-
-    const overlayBuffer = await renderTextOverlayBuffer(options);
-    let overlay = vips.Image.newFromBuffer(overlayBuffer);
-    const rotation = options.rotation ?? 0;
-    if (rotation !== 0) {
-      const rotated = overlay.similarity({ angle: rotation });
-      overlay.delete();
-      overlay = rotated;
-    }
-
-    const margin = Math.max(12, Math.round(options.fontSize * 0.6));
-    let posX: number;
-    let posY: number;
-    switch (options.position) {
-      case "top-left":
-        posX = margin; posY = margin; break;
-      case "top-center":
-        posX = Math.round((img.width - overlay.width) / 2); posY = margin; break;
-      case "top-right":
-        posX = img.width - overlay.width - margin; posY = margin; break;
-      case "middle-left":
-        posX = margin; posY = Math.round((img.height - overlay.height) / 2); break;
-      case "middle-right":
-        posX = img.width - overlay.width - margin; posY = Math.round((img.height - overlay.height) / 2); break;
-      case "bottom-left":
-        posX = margin; posY = img.height - overlay.height - margin; break;
-      case "bottom-center":
-        posX = Math.round((img.width - overlay.width) / 2); posY = img.height - overlay.height - margin; break;
-      case "bottom-right":
-        posX = img.width - overlay.width - margin; posY = img.height - overlay.height - margin; break;
-      case "center":
-      default:
-        posX = Math.round((img.width - overlay.width) / 2);
-        posY = Math.round((img.height - overlay.height) / 2);
-        break;
-    }
-
-    let composited;
-    if (options.position === "mosaic") {
-      let current = img;
-      const tileW = current.width / 3;
-      const tileH = current.height / 3;
-      for (let row = 0; row < 3; row += 1) {
-        for (let col = 0; col < 3; col += 1) {
-          const centerX = Math.round(col * tileW + tileW / 2);
-          const centerY = Math.round(row * tileH + tileH / 2);
-          const x = Math.round(centerX - overlay.width / 2);
-          const y = Math.round(centerY - overlay.height / 2);
-          const next = current.composite2(overlay, "over", { x, y });
-          if (current !== img) current.delete();
-          current = next;
-        }
-      }
-      composited = current;
-      if (img !== composited) img.delete();
-    } else {
-      composited = img.composite2(overlay, "over", { x: posX, y: posY });
-      img.delete();
-    }
-
-    overlay.delete();
-    return encodeAndTransfer({ img: composited, format: options.format, quality: effectiveQuality, file });
+  async runPipeline(file: WorkerImageInput, options: PipelineOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
+    return runPipeline(file, options);
   },
 
   // -------------------------------------------------------------------------
@@ -1036,6 +1184,22 @@ const api = {
     for (const job of jobs) {
       try {
         const out = await api.watermarkText(job.file, job.options);
+        results.push({ id: job.id, status: "success", ...out });
+      } catch (error) {
+        results.push({ id: job.id, status: "error", error: error instanceof Error ? error.message : "Unknown error" });
+      }
+    }
+    const transferables = results
+      .filter((r): r is Extract<WorkerBatchResult, { status: "success" }> => r.status === "success")
+      .map((r) => r.buffer as Transferable);
+    return transfer(results, transferables);
+  },
+
+  async batchRunPipeline(jobs: Array<WorkerBatchJob<PipelineOptions>>): Promise<WorkerBatchResult[]> {
+    const results: WorkerBatchResult[] = [];
+    for (const job of jobs) {
+      try {
+        const out = await runPipeline(job.file, job.options);
         results.push({ id: job.id, status: "success", ...out });
       } catch (error) {
         results.push({ id: job.id, status: "error", error: error instanceof Error ? error.message : "Unknown error" });

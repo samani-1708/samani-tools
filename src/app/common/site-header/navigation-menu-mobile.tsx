@@ -2,11 +2,10 @@
 
 import {
   MenuIcon,
-  SettingsIcon,
   FileTextIcon,
   ImageIcon,
+  LayoutGridIcon,
   WrenchIcon,
-  ExternalLinkIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,6 +27,7 @@ import {
   PDF_TOOLS_HEADER,
   UTILITY_TOOLS_HEADER,
 } from "../constants";
+import { BuyMeACoffeeMobileCard } from "@/app/common/bmc";
 
 export function NavigationMenuMobile() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -90,7 +90,7 @@ function MobileNav({
             <h4 className="font-semibold text-base">PDF Tools</h4>
           </div>
           <div className="space-y-1">
-            {PDF_TOOLS_HEADER.filter((tool) => tool.href !== "/pdf").map(
+            {PDF_TOOLS_HEADER.filter((tool) => tool.href !== "/pdf").slice(0, 5).map(
               (tool) => {
                 const Icon = tool.icon;
                 const isActive = currentPath === tool.href;
@@ -139,7 +139,7 @@ function MobileNav({
               }`}
             >
               <div className="p-1.5 rounded bg-cyan-50">
-                <FileTextIcon className="h-4 w-4 text-cyan-600" />
+                <LayoutGridIcon className="h-4 w-4 text-cyan-600" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-sm">All PDF Tools</div>
@@ -165,9 +165,7 @@ function MobileNav({
             <h4 className="font-semibold text-base">Image Tools</h4>
           </div>
           <div className="space-y-1">
-            {IMAGE_TOOLS_HEADER.filter(
-              (tool) => !tool.href.includes("more")
-            ).map((tool) => {
+            {IMAGE_TOOLS_HEADER.slice(0, 5).map((tool) => {
               const Icon = tool.icon;
               const isActive = currentPath === tool.href;
               return (
@@ -204,6 +202,30 @@ function MobileNav({
                 </Link>
               );
             })}
+            <Link
+              href="/image"
+              onClick={onNavigate}
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                currentPath === "/image"
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              <div className="p-1.5 rounded bg-blue-50">
+                <LayoutGridIcon className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-medium text-sm">All Image Tools</div>
+                <div className="text-xs text-muted-foreground">
+                  Browse complete collection
+                </div>
+              </div>
+              {currentPath === "/image" && (
+                <Badge variant="secondary" className="text-xs">
+                  Current
+                </Badge>
+              )}
+            </Link>
           </div>
         </div>
 
@@ -216,7 +238,7 @@ function MobileNav({
             <h4 className="font-semibold text-base">Utility Tools</h4>
           </div>
           <div className="space-y-1">
-            {UTILITY_TOOLS_HEADER.map((tool) => {
+            {UTILITY_TOOLS_HEADER.slice(0, 5).map((tool) => {
               const Icon = tool.icon;
               const isActive = currentPath === tool.href;
               return (
@@ -260,7 +282,7 @@ function MobileNav({
               }`}
             >
               <div className="p-1.5 rounded bg-violet-50">
-                <WrenchIcon className="h-4 w-4 text-violet-600" />
+                <LayoutGridIcon className="h-4 w-4 text-violet-600" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-sm">All Utility Tools</div>
@@ -278,21 +300,8 @@ function MobileNav({
         </div>
       </div>
 
-      {/* Footer */}
       <div className="px-4 py-4 border-t bg-muted/20">
-        <a
-          href="https://www.buymeacoffee.com/samanitools"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center space-x-2 p-3 rounded-lg bg-yellow-50 hover:bg-yellow-100 transition-colors"
-        >
-          <div className="text-2xl">☕</div>
-          <div className="flex-1">
-            <div className="font-medium text-sm">Support Us</div>
-            <div className="text-xs text-muted-foreground">Buy me a coffee</div>
-          </div>
-          <ExternalLinkIcon className="h-4 w-4 text-muted-foreground" />
-        </a>
+        <BuyMeACoffeeMobileCard />
       </div>
     </div>
   );

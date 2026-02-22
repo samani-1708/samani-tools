@@ -10,6 +10,8 @@ export const PDF_TOOL_ROUTES = [
   "/pdf/unlock-pdf",
   "/pdf/organize-pdf",
   "/pdf/page-numbers",
+  "/pdf/edit-pdf",
+  "/pdf/extract-content",
 ] as const;
 
 export const IMAGE_TOOL_ROUTES = [
@@ -31,4 +33,5 @@ export const UTILITY_TOOL_ROUTES = [
   "/utils/jwt-encode-decode",
   "/utils/json-viewer",
   "/utils/diff-checker",
+  "/utils/markdown-viewer",
 ] as const;

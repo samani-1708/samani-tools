@@ -1,0 +1,58 @@
+Instantly crop PDF pages online for free. Just upload your PDF file and easily trim unwanted margins on one or multiple pages. No software downloads. No unwanted watermarks.
+* 		Crop any PDF in seconds—no signup requiredWorks on Mac, Windows, iOS, Android, and LinuxTrusted by 1.7 billion people since 2013
+Crop PDFs for a Cleaner, More Professional Look
+Trim unwanted margins or unneeded areas from your PDF. Whether you’re preparing a report or optimizing a scanned document, our online Crop PDF tool makes it quick and simple.
+Precise Cropping in Seconds
+Select the exact area of your PDF you want to keep, then remove the rest with a simple click. Your changes are fast, clean, and accurate.
+￼
+Crop One Page, or All at Once
+Save time by cropping a single page, or applying the same crop to your entire PDF. Perfect for cleaning up scanned documents or multi-page files fast.
+￼
+Integrated With Your PDF Workflow
+After cropping, move on to editing, signing, compressing, or converting—without switching tools. Everything stays in one secure, easy-to-use workspace.
+￼
+￼
+How To Crop PDF Pages Online for Free
+* 		Upload your PDF into the Crop PDF tool.Toggle to crop one page, or all pages at once.Drag to select the area you want to keep.Click the check mark to confirm your selection.Hit ‘Finish’ to download your cropped PDF, or edit further with 30+ tools.
+A Quicker Way to Crop PDFs Online
+* 		
+* ￼
+* Start Immediately—No FussCrop PDFs right in your browser. No downloads, signups, or complicated setup. Just upload, crop, and be on your way.
+* 		
+* ￼
+* Works on Any DeviceUse Crop PDF on Mac, Windows, Linux, iOS, or Android. Your trimming tools are always accessible, no matter what device you’re on.
+* 		
+* ￼
+* Custom Crop for Any PageCrop one page or the whole document in a single action. Simply flip the toggle, make your selection, and watch unwanted areas disappear.
+* 		
+* ￼
+* Perfect for Scanned DocumentsRemove scanner shadows, skewed edges, or distracting backgrounds in a snap. Worry less when scanning, knowing it’s easy to clean up afterward.
+* 		
+* ￼
+* Professional, Polished OutputYour cropped PDFs retain quality, layout, and formatting. Files are ready to share, present, or archive without extra edits.
+* 		
+* ￼
+* Safe From Start To FinishTLS encryption, GDPR compliance, and ISO certification keep your data secure. Files are auto-deleted after one hour for extra peace of mind.
+Crop PDF FAQs
+* 		Can I crop just one page of a PDF?Yes! Our online PDF cropper lets you trim a single page or multiple pages at once. Just flip the toggle to pick the option you need.
+* 		Will cropping affect my PDF’s quality?Not at all. Cropping only removes unwanted areas. Your text, images, and formatting stay crisp and looking sharp.
+* 		Is the Crop PDF tool free to use?Yes, you can crop PDFs for free! There are some usage limits for free users, but that doesn’t stop you from trying it out. Upgrading to Pro gives you unlimited cropping, editing, and access to 30+ PDF tools.
+* 		Can I crop scanned documents?Absolutely. It’s one of the main reasons we made this tool. Easily crop out scanner marks, shadows, or unnecessary backgrounds to create cleaner documents.
+* 		Is my file secure while using this tool?Yes. Files are encrypted during processing and automatically deleted after one hour. We’re also GDPR compliant and ISO/IEC 27001 certified, so you can rest assured your docs are safe and for your eyes only.
+
+
+Online PDF crop tool
+Free and easy to use online tool for visual PDF document cropping / changing canvas size. With this tool, you can easily crop scans, Flipkart labels, logos, and any other PDFs.
+You can crop the PDF to a selected area or choose the Auto-crop option, to try and remove all margins automatically. You can also use PDF cropper to increase visible margins, for example, to add extra space for annotations, by choosing the Extend margins option.
+How to Crop a PDF
+1. Upload your document. If you wish to upload multiple files simultaneously, please ensure that they are of the same size and margins.
+2. If you want to select the part of the document for cropping manually, mark it in the preview window and then choose the Crop to selection option.
+3. Choose Auto-crop to trim all the white margins automatically.
+4. It is important to note that all pages in the processed documents will be cropped equally. If you require different parts of each page to be cropped, we recommend splitting the file before manually cropping each page.
+Cropping Options
+* Crop to selection: Visually select the area you want to keep using the interactive cropping tool.
+* Auto-crop: Automatically detect and remove white margins around the page content.
+* Extend margins: Add extra whitespace around the page edges — useful for binding margins or annotation space.
+All files are processed on our server and automatically deleted within 1 hour of upload.
+
+Need to make more changes? Try our PDF resize tool to change the resolution, rotate pages, or split the document into individual pages for per-page cropping.

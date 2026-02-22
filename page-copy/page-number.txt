@@ -1,0 +1,88 @@
+A free online tool to insert page numbers to an existing PDF document. No download or installation is needed. Ideal for legal documents, reports, and more.
+* 		TLS encryption for secure document processingWorks in your browser—no installation neededUsed by billions of people worldwide
+￼
+A Simple Way To Add Numbers to PDF Files
+Adding page numbers to your PDF with Smallpdf is simple: upload your PDF, choose where you'd like the numbers, and download the finished file! No need to worry about complex settings or formatting.
+￼
+Secure Online File Handling
+Your PDFs are secured during all file transfers using TLS encryption on our cloud platform. You have plenty of time to download your PDF with page numbers, as all files are automatically deleted from our servers after one hour.
+￼
+100% Cloud-Based
+Number your PDF pages easily through your browser. Smallpdf is compatible with all operating systems, including Windows, Mac, Linux, Android, and iOS. All you need is an internet connection.
+￼
+Data Protection & Security
+We take matters of data protection and file security seriously. Our site uses TLS encryption and we are GDPR compliant, as well as ISO/IEC 27001 certified. Find out more on our privacy page.
+￼
+Connected Workflows
+After numbering the pages of your PDF file, you have a wide range of tools at your disposal. For instance, you can further edit, compress, sign it, remove pages, and even convert it to an editable format like Word or Excel!
+￼
+Free for Everybody
+We want to make PDF easy and we believe that shouldn’t cost anything. That’s why you don’t need an account or sign up for anything to use our page numbering tool. Only batch processing multiple files at once is a Pro feature. We’d love to get to know you—on your terms.
+￼
+How To Add & Insert Page Numbers to PDF:
+* 		Import or drag & drop your file to our PDF page number tool.Select the position where you want page numbers to appear.Adjust page margins and other options as needed.Click “Number pages” and wait just a second.Download your PDF with page numbers—that’s it!
+FAQs About Adding Page Numbers to PDFs
+* 		Can I add page numbers to multiple PDFs at once?Absolutely! Smallpdf makes it simple to add page numbers to multiple PDFs simultaneously. In just a few clicks, you can choose the location of the page numbers and adjust the margins for a polished look. The process is straightforward: Click 'Choose Files' in the upload box at the top of this page and select the PDFs you want to number. Then, choose the page number position, set your margins, select your starting page number, and download all of your page-numbered PDFs at once.
+* 		How do I add sequential page numbers to a PDF?You can easily add sequential page numbers to a PDF with Smallpdf. In fact, you can try it for free right now at the top of this page. Just upload your PDF, pick where you want your page numbers to appear, and download your sequentially numbered PDF.
+* 		How to combine PDF files and add page numbers?You can combine multiple PDFs and add page numbers in two simple steps. First, combine your PDF files using a PDF merger. With the free Smallpdf Merge PDF tool, just upload the PDF files you want to merge, rearrange document pages as desired, and click ‘Finish’ to create a single PDF. Next, click the ‘Number Pages’ button that appears. Then just pick the options that suit you best—like page number location and margin settings—and the page numbers instantly appear across your newly merged PDF.
+* 		Can I add page numbers to any location on my PDF?Of course, the choice is yours. With the Smallpdf Page Number tool, you can easily place page numbers at the top, bottom, or any corner of your PDF. You can even adjust your margins to make sure everything is easy to read. Try it now—just drop a PDF into the box at the top of this page, follow the prompts, and let our tool handle the rest in an instant.
+
+
+
+
+All the PDF tools you need, now 100% free
+Enjoy unlimited PDF tools usage in India with a free account on Acrobat.com. No subscription or credit card required. Excludes AI features.
+Create a free account
+How to add page number in a PDF
+Follow these easy steps to add page numbers into your PDF online:
+￼
+* 		Begin by clicking the "Select a file" button above or dragging and dropping a PDF into the designated drop zone.Next, choose the PDF document to which you want to add page numbers.Once Acrobat has uploaded your selected PDF file, sign in to proceed.Then, select the position where you want the numbers to appear on your PDF pages and specify your desired page range.Click "Save" to save your newly numbered PDF file.Finally, download your new PDF document or obtain a link to share it with others.
+Try adding page numbers in a PDF for free
+￼
+Insert page number in a PDF online
+Simplify navigation by adding page numbers to a PDF online with Adobe Acrobat, helping you organise files efficiently. Select a PDF and sign in to begin.
+￼
+Add numbers on either side of pages
+Choose where to add a page number in PDF, such as top, bottom, left, centre, or right. You can also select which page to start numbering from.
+￼
+Number PDF files up to 100 MB in size
+Add numbers to all pages or a specific range using the Acrobat online tool, keeping your PDF file size under 100 MB.
+￼
+Keep you PDF files organised
+Keeping PDF files organised helps you search and manage documents easily. After numbering your PDF, explore other Acrobat online tools such as reorder, rotate, delete, or add PDF pages to maintain organisation.
+￼
+Work across browsers and devices
+Use Acrobat online PDF tools in any browser, including Microsoft Edge and Google Chrome, without installing additional software.
+￼
+Try Adobe online tools today
+Acrobat online tools from the inventor of the PDF file format deliver high-quality results. Use the free PDF page numbers tool to navigate files quickly and share specific pages efficiently.
+Questions? We have answers.
+Why should you add page numbers to PDFs?
+
+Can I add page numbers to a header and footer?
+
+Can I number pages in a certain page range?
+
+You can number all of the pages in a PDF file or select a specific page range for numbering. In addition, you can start page numbers on any page. Just specify the page where you want the numbering to start from and the numbering style.
+How can I start numbering from a specific page instead of the first page?
+
+Adobe Acrobat allows you to start page numbering from any page in your PDF. Simply select the starting page when setting up page numbers, which is helpful for skipping title pages, cover pages, or tables of contents.
+Can I add different numbering styles to different sections of my PDF?
+
+Yes, using Adobe Acrobat online tool, you can apply different numbering styles to separate sections of a PDF. For example, you can use Roman numerals for prefaces or appendices and standard numbers for the main content. This is useful for academic documents, reports, or e-books.
+Can I add page numbers in different positions on odd and even pages?
+
+Yes, you can position page numbers differently on odd and even pages in Acrobat. This is ideal for print-ready PDFs, books, or professional reports where odd and even pages require different layouts.
+Will my page numbers automatically update when I delete or add pages to my PDF?
+
+No. If you reorder, delete or add PDF pages, you will need to renumber the pages for the page numbers to appear correctly.
+Can I preview the PDF with page numbers before finalising the changes?
+
+Yes, before clicking on save and downloading the document to share with others, you can preview your page numbering and modify them if required.
+Is there a way to remove or edit page numbers after they have been added?
+
+To remove or edit the page numbers, you need to follow the same steps of adding page numbers to PDFs online. You can either upload the file again or sign in to your Acrobat account to modify the page numbers and remove them if not required.
+Does numbering a PDF affect its file size or quality?
+
+No, adding page numbers in a PDF does not significantly change the file size or reduce quality. You can safely number large documents, scanned PDFs, or image-heavy files without worrying about loss of clarity.
+What are some tips for customising page numbers in a PDF?

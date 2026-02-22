@@ -1,9 +1,10 @@
-import { SettingsIcon } from "lucide-react";
 import Link from "next/link";
 
 import { BRAND_NAME } from "../constants";
+import { BuyMeACoffeeButton } from "@/app/common/bmc";
 import { NavigationMenuDesktop } from "./navigation-menu-desktop";
 import { NavigationMenuMobile } from "./navigation-menu-mobile";
+import { ThemeToggle } from "./theme-toggle";
 
 export function SiteHeader() {
   return (
@@ -32,14 +33,8 @@ export function SiteHeader() {
             </Link>
           </div>
           <nav className="flex items-center">
-            <a href="https://www.buymeacoffee.com/samanitools" target="_blank">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-                alt="Buy Me A Coffee"
-                style={{ maxWidth: 217, height: 36 }}
-              />
-            </a>
+            <ThemeToggle />
+            <BuyMeACoffeeButton />
           </nav>
         </div>
       </div>

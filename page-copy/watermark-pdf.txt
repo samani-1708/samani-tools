@@ -1,0 +1,77 @@
+Need to easily add a watermark to your PDF documents? Add text watermarks to PDFs for free using our online PDF Watermarker. Customize text, font, size, color, and opacity in seconds—right in your browser.
+* 		Add custom PDF watermarks in secondsTrusted by 1.7 billion people since 2013Works on Mac, Windows, Linux, iOS, and Android
+Protect and Personalize Your PDFs with Watermarks
+Mark a document as confidential, prevent unauthorized use, or brand it with your company name. Our Watermark PDF tool makes it easy to add custom text watermarks with the font, color, and style you need in just a few clicks.
+Add Custom Watermarks in Seconds
+Add your own text and style it with custom fonts, sizes, colors, and opacity. No design software or technical skills needed to make it look great.
+￼
+Protect Your Content
+Mark your PDFs to prevent unauthorized use and ensure credit for your work. A clear, visible watermark makes ownership and permission levels clear.
+￼
+Brand with Ease
+Add your company or client name to every page for a consistent, professional look. Reinforce brand identity while maintaining a polished, unified look.
+￼
+￼
+How To Add a Watermark to PDF Pages Online for Free
+* 		Drag & drop your PDF into the Watermark PDF tool.Type your watermark text in the input field.Customize the font, size, color, and opacity.Click ‘Finish’ to download or share your watermarked PDF.
+Why Use Smallpdf to Watermark Your PDFs?
+* 		
+* ￼
+* Start Immediately—No FussAdd watermarks directly in your browser with ease. No software downloads. No account signups. No learning curves.
+* 		
+* ￼
+* Works on Any DeviceUse the Watermark tool on Mac, Windows, Linux, iOS, or Android. It’s smooth, fast, and works right in your browser.
+* 		
+* ￼
+* Customize Your WatermarkAdjust text, font, size, color, and opacity for a watermark that fits your document—and your brand—perfectly.
+* 		
+* ￼
+* Protect Sensitive or Confidential FilesClearly label PDFs to avoid unauthorized sharing or misuse. Protect confidential or proprietary information with visible, tasteful watermarks.
+* 		
+* ￼
+* Consistent BrandingAdd company names, department labels, or project codes for consistent internal and external sharing. Pick the fonts and colors that match your look.
+* 		
+* ￼
+* Safe From Start To FinishTLS encryption, GDPR compliance, and ISO certification keep your data secure. Files are auto-deleted after one hour for extra peace of mind.
+Watermark PDF FAQs
+* 		What can I use as a watermark?You can add any text to protect or brand your PDF. Labels like “Confidential,” “Draft,” your name, or your company name are popular. But the choice is up to you.
+* 		Can I add image watermarks?This tool currently supports text watermarks. You can use our Edit PDF tool to insert logos, graphics, or images of any type.
+* 		Is the Watermark PDF tool free?Yes! You can add text watermarks to PDFs for free. There are some usage limits for free users, but that doesn’t stop you from trying it out. Upgrading to Pro gives you unlimited watermarks and access to over 30 other PDF tools.
+* 		Will the watermark appear on every page?Yes. By default, the watermark is applied to all pages in your PDF.
+* 		Is my document secure during the watermarking process?Absolutely. We use TLS encryption for all file uploads and downloads. We also automatically delete all files from our servers after one hour of processing, unless you choose to create an account and save your files on our secure servers.
+
+
+
+How To Watermark PDF Pages Online For Free
+
+Below we show how to add text watermark to PDF documents online, for free. Works on all desktop platforms including Mac.
+Step 1: Select your PDF document
+Upload your files
+Files are safely uploaded over an encrypted connection. Files stay secure. After processing, they are permanently deleted.
+Rather not upload your files and work with them offline?Try Sejda Desktop. Same features as the online service, and the files never leave your computer.
+Click 'Upload' and select files from your local computer.
+Dragging and dropping files to the page also works.
+Dropbox or Google Drive files
+You can pick PDF files from Dropbox or Google Drive too.
+Expand the 'Upload' dropdown and select your files.
+Step 2: Add Text Watermark
+Click the 'Add Text' button at the top of the PDF page. You should see a text watermark being added.
+Click on it to edit the text. Type 'Draft' or 'Classified' to try it out.
+￼
+Step 3: Change text size, rotation and location on page
+Click and drag the text watermark to change the location on the PDF pageDrag the rotation handle to rotate the text watermark.
+Click and drag the resize handles found on the sides to change font size.
+Step 4: Change text color, transparency and font family
+Click on the text watermark to reveal its associated menu.
+One can change the transparency of the watermark, making the text more or less opaque.Watermark text color can also be configured, together with the font used for the text.
+Ready to add text watermark to your PDF file? Let's go!
+We describe below how to add image as watermark to PDF documents online, for free.
+Step 2: Add Image Watermark
+Click the 'Add Image' button and select the image file to use as PDF watermark. Most popular image formats are all supported: JPG, JPEG, GIF, PNG, SVG.
+￼
+Step 3: Rotate, resize or change position on page
+Click and drag the image watermark to change the position on the PDF page.Drag the rotation handle to rotate the text watermark.Drag the resize handles found on the image sides to resize the image.
+Step 4: Change transparency
+Click on the image watermark to reveal the associated menu.From the associated menu change the opacity of the watermark.
+
+

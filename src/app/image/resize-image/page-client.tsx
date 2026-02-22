@@ -19,7 +19,7 @@ import {
   formatBytes,
   getBaseName,
 } from "../common/image-utils";
-import { QualitySlider } from "../common/quality-slider";
+import { QualityBlock } from "../common/quality-slider";
 
 const MAX_DIMENSION = 16384;
 const PERCENTAGE_PRESETS = [25, 50, 75, 100, 150, 200];
@@ -258,9 +258,12 @@ export function PageClient() {
             <Label htmlFor="aspect-ratio">Lock aspect ratio</Label>
           </div>
 
-          {!isPng && (
-            <QualitySlider value={quality} onChange={setQuality} disabled={isProcessing} />
-          )}
+          <QualityBlock
+            value={quality}
+            onChange={setQuality}
+            disabled={isProcessing}
+            format={isPng ? "image/png" : "image/jpeg"}
+          />
 
           {!isLoaded && (
             <p className="text-xs text-muted-foreground mb-6">Loading image engine...</p>
@@ -286,9 +289,8 @@ export function PageClient() {
         )
       }
       secondaryActions={
-        <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
-          Start Over
-          <RotateCcwIcon className="w-4 h-4 ml-2" />
+        <Button variant="outline" size="icon" onClick={handleReset} aria-label="Start over">
+          <RotateCcwIcon className="w-4 h-4" />
         </Button>
       }
     />

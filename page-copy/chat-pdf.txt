@@ -1,0 +1,70 @@
+* 		
+* 		How to chat with PDF?To start chatting with your PDF, just upload your file by dragging and dropping it into the tool above or selecting it from your device. The AI will quickly scan your document and prepare it for conversation. Once it’s ready, type your question into the chat box. You’ll get instant, clear answers. You can even copy responses with one click to use them elsewhere.
+* 		How to chat with multiple PDF files?Simply upload multiple PDFs into the Chat PDF tool at once. The AI will process each file and allow you to ask questions across all of them.
+* 		Is it safe to chat with any PDF online?Yes. Smallpdf uses TLS encryption, automatically deletes files after a set time (unless you save them to your Smallpdf account), and is GDPR compliant and ISO/IEC 27001 certified. Your documents stay secure.
+* 		Are there free AI tools to chat with PDF files?Absolutely! Smallpdf’s Chat PDF is totally free. No registration is required.
+* 		Can Chat PDF summarize complex documents?Definitely. The tool can deliver crisp summaries and “key‑takeaway” overviews, and you can drill deeper by asking follow-up questions. It even supports content referencing (e.g., “what’s on page 12?”).
+* 		Can Chat with PDF understand different languages?Yes! Chat with PDF supports multilingual text. As long as the language is present in the PDF, the AI can read, summarize, and answer questions in that language. It also works with scanned or handwritten content using OCR.
+* 		What are the benefits of Chat with PDF?Chat PDF makes working with documents faster and easier. Instead of scrolling through pages, you can ask questions and get instant, accurate answers. It helps you understand complex content, supports multiple languages and even scanned PDFs, thanks to built-in OCR. The tool is entirely browser-based, so there’s no need to install anything or create an account.
+All the PDF tools you need, now 100% free
+Enjoy unlimited PDF tools usage in India with a free account on Acrobat.com. No subscription or credit card required. Excludes AI features.
+Create a free account
+How to chat with PDF files
+Follow these steps to ask your PDF questions and get instant answers with our PDF AI tool:
+
+* 		Use the Select files button above or drag and drop a document into the drop zone.Review the suggested questions for fast insights.Sign in to ask your PDF questions and get quick AI chat answers.Use the PDF AI answers to craft emails, presentations and more.
+Try our AI chat tool for free
+Gone are the days of skimming pages for the information that you need. Use PDF AI to get the most important insights in seconds. Our online tool allows you to chat with PDF documents to get quick answers to your questions.
+￼
+Chat with your documents
+All you have to do is ask. Upload a document, sign in and type a question to get a quick answer. With Acrobat AI Assistant, you can understand key information and analyse data in seconds.
+￼
+Get to what matters fast
+Need quick insights? Review the brief AI-powered overview of your doc. Then select a suggested question or ask your PDF any question to streamline document research and analysis.
+￼
+Speed up workflows with PDF answers
+With AI Assistant, you can create impactful content based on your document in record time. Use AI chat answers to craft emails, social media posts, presentations and more.
+￼
+Trace answers back to linked sources
+AI Assistant answers include numbered attributions that make it easy to verify information. When you use our PDF AI tools and select a numbered link, Acrobat highlights the source content right in the document.
+￼
+Simplify complex data
+You can ask your PDF any question you have for any use case. AI Assistant delivers fast answers by using AI algorithms to quickly analyse document content, including data in charts and tables.
+￼
+PDF AI you can trust
+As the inventor of the PDF file format, Adobe delivers document security and AI technology you can trust. So you can use our AI tool to chat with PDFs confidently.
+￼
+Anyone can chat with a PDF
+AI chat is beneficial to everyone, from students researching dense texts to business owners simplifying the terms of their contracts. Whether you are doing research for an assignment, a professional need or just for fun, chatting with PDFs helps unlock answers.
+Chat with PDF FAQs.
+What kind of questions can I ask my PDF?
+
+Can I use the tool to chat with other types of documents?
+
+Can I verify the information in the answers?
+
+Can I summarise individual sections of a PDF document?
+
+Is AI Assistant a secure tool to use to chat with PDFs?
+
+Security is paramount to Adobe. When you upload documents using this tool, they will be deleted from our servers to respect your privacy if you don’t sign in. Security measures are also built into every PDF created with Acrobat.
+In addition, Adobe has integrated the trusted Microsoft Azure OpenAI Service AI model with our proprietary technologies to provide generative AI capability in Acrobat. Adobe and its service providers do not use Adobe customer content to train the large language models (LLMs) — ours or a third party’s — that deliver Acrobat generative AI capabilities. We also do not permit third parties to manually review Adobe customer content.
+Chat with PDF resources
+
+
+What kind of questions can I ask my PDF?
+
+You can use the Acrobat AI Assistant tool to ask a PDF all kinds of questions. AI Assistant will then provide a quick answer, using natural language for easier understanding. For example, you can ask AI Assistant to list a document’s five most important points or you can ask it to draught an email summarising your document. Don’t know what to ask or what to expect from a PDF AI tool? Simply select one of the common questions suggested by AI Assistant.
+Can I use the tool to chat with other types of documents?
+
+Yes, you can upload a PDF or any other supported document file. If you upload a Microsoft Word document (DOCX), PowerPoint presentation (PPTX), TXT file or RTF file, the Acrobat online tool will convert the file format to PDF. Then sign in to ask your document questions and get quick answers.
+Can I verify the information in the answers?
+
+You’ll notice that many AI Assistant answers provide attribution by including numbered references as clickable links. When you select one of the numbered links in the AI Assistant chat answer, the AI PDF tool instantly highlights the related source content in your document. This interactive artificial intelligence feature provides a fast, seamless way for users to verify information with a single click. You can copy the chat history and use the answers to craft other content like emails, social posts or presentations. Learn more about how the chat history is stored.
+Can I summarise individual sections of a PDF document?
+
+To summarise an individual section of a PDF document, upload a file to the Acrobat AI chat tool and sign in. Then ask your PDF to draught a summary of the specific section you need summarised. You can also ask other research questions, including questions that analyse data across tables shared in the document.
+Is AI Assistant a secure tool to use to chat with PDFs?
+
+Security is paramount to Adobe. When you upload documents using this tool, they will be deleted from our servers to respect your privacy if you don’t sign in. Security measures are also built into every PDF created with Acrobat.
+In addition, Adobe has integrated the trusted Microsoft Azure OpenAI Service AI model with our proprietary technologies to provide generative AI capability in Acrobat. Adobe and its service providers do not use Adobe customer content to train the large language models (LLMs) — ours or a third party’s — that deliver Acrobat generative AI capabilities. We also do not permit third parties to manually review Adobe customer content.

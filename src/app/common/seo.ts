@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://thesamani.com";
-export const SITE_NAME = "🤗 SamAni Tools";
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://example.com";
+export const SITE_NAME =
+  process.env.NEXT_PUBLIC_SITE_NAME || "Utility Tools";
 
 type MetadataInput = {
   title: string;

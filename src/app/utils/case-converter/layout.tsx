@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { createMetadata } from "@/app/common/seo";
-import { ToolContainer } from "@/app/common/tool-container";
 
 export const metadata: Metadata = createMetadata({
   title: "Case Converter",
@@ -17,7 +16,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <ToolContainer>{children}</ToolContainer>
-  );
+  return children;
 }

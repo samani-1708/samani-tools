@@ -1,15 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { cookies } from "next/headers";
 import { Toaster } from "@/components/ui/sonner";
 import { SITE_NAME, SITE_URL } from "./common/seo";
+import { BRAND_NAME } from "./common/constants";
 import { LayoutShell } from "./common/layout-shell";
+import { GlobalSeoJsonLd } from "./common/seo-jsonld";
+import { BuyMeACoffeeFloatingScript } from "@/app/common/bmc";
+import { AdsenseScript } from "@/app/common/adsense";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "🤗 SamAni - Free PDF, Image, and Utility Tools",
-    template: "%s | SamAni",
+    default: `${BRAND_NAME} - Free PDF, Image, and Utility Tools`,
+    template: `%s | ${BRAND_NAME}`,
   },
   description:
     "Free browser-based tools to edit PDFs and images: merge, split, compress, convert, crop, watermark, resize, and more. Private and secure.",
@@ -35,7 +40,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "🤗 SamAni - Free PDF and Image Tools",
+    title: `${BRAND_NAME} - Free PDF and Image Tools`,
     description:
       "Edit PDF and image files directly in your browser. Fast, private, and free.",
     url: SITE_URL,
@@ -45,7 +50,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "🤗 SamAni - Free PDF and Image Tools",
+    title: `${BRAND_NAME} - Free PDF and Image Tools`,
     description:
       "Merge, split, compress, convert, crop, watermark, and resize files in your browser.",
   },
@@ -62,9 +67,9 @@ export const metadata: Metadata = {
   },
   authors: [
     { name: "vtechguys", url: "https://github.com/vtechguys" },
-    { name: "samani-1708", url: "https://github.com/samani-1708" },
+    { name: "maintainer", url: "https://github.com" },
   ],
-  creator: "🤗 SamAni",
+  creator: BRAND_NAME,
   publisher: SITE_NAME,
   applicationName: SITE_NAME,
   category: "Technology",
@@ -80,12 +85,45 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
-export default function RootLayout(props: RootLayoutProps) {
+export default async function RootLayout(props: RootLayoutProps) {
   const { children } = props;
+  const adsenseEnabled = process.env.NEXT_PUBLIC_ENABLE_ADSENSE === "true";
+  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID?.trim();
+  const cookieStore = await cookies();
+  const savedTheme = cookieStore.get("site-theme")?.value;
+  const savedMode = cookieStore.get("site-mode")?.value;
+  const theme =
+    savedTheme === "forest" ||
+    savedTheme === "blue" ||
+    savedTheme === "lavender" ||
+    savedTheme === "beach" ||
+    savedTheme === "default"
+      ? savedTheme
+      : "default";
+  const isDark = savedMode === "dark";
 
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme} className={isDark ? "dark" : undefined}>
+      <head>
+        <AdsenseScript enabled={adsenseEnabled} clientId={adsenseClientId} />
+      </head>
       <body className="flex flex-col min-h-screen">
+        <Script id="theme-init" strategy="beforeInteractive">{`
+          (function () {
+            try {
+              var theme = localStorage.getItem('site-theme') || '${theme}';
+              var mode = localStorage.getItem('site-mode') || '${savedMode === "dark" ? "dark" : "light"}';
+              if (theme !== 'default' && theme !== 'forest' && theme !== 'blue' && theme !== 'lavender' && theme !== 'beach') theme = 'default';
+              document.documentElement.setAttribute('data-theme', theme);
+              if (mode === 'dark') document.documentElement.classList.add('dark');
+              else document.documentElement.classList.remove('dark');
+            } catch (_) {
+              document.documentElement.setAttribute('data-theme', '${theme}');
+              ${isDark ? "document.documentElement.classList.add('dark');" : "document.documentElement.classList.remove('dark');"}
+            }
+          })();
+        `}</Script>
+        <GlobalSeoJsonLd />
         <LayoutShell>
           {children}
           <Toaster />
@@ -96,21 +134,7 @@ export default function RootLayout(props: RootLayoutProps) {
             navigator.serviceWorker.register('/sw-asset-cache.js').catch(function() {});
           }
         `}</Script>
-        {/* buy me a coffee: floating widget */}
-        <Script
-          type="text/javascript"
-          src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-          data-name="bmc-button"
-          data-slug="samanitools"
-          data-color="#FFDD00"
-          data-emoji="☕"
-          data-font="Cookie"
-          data-text="Buy me a coffee"
-          data-outline-color="#000000"
-          data-font-color="#000000"
-          data-coffee-color="#ffffff"
-          strategy="lazyOnload"
-        />
+        <BuyMeACoffeeFloatingScript />
       </body>
     </html>
   );

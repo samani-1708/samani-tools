@@ -61,6 +61,33 @@ export interface WatermarkTextOptions {
   quality?: number;
 }
 
+export type PipelineOp =
+  | { type: "clamp"; maxWidth?: number; maxHeight?: number }
+  | { type: "resize"; width: number; height: number }
+  | {
+      type: "crop";
+      area: { x: number; y: number; width: number; height: number };
+      rotation?: number;
+      flip?: "horizontal" | "vertical" | "both" | "none";
+    }
+  | {
+      type: "watermark";
+      text: string;
+      fontSize: number;
+      opacity: number;
+      color: string;
+      position: ImageWatermarkPosition;
+      rotation?: number;
+    };
+
+export interface PipelineOptions {
+  ops: PipelineOp[];
+  format: EncodableImageFormat;
+  /** Slider fraction 0–1. outputQuality = estimatedInputQuality × sliderFraction */
+  quality?: number;
+  sizeGuard?: boolean;
+}
+
 export interface ImageBatchJob<TOptions> {
   id?: string;
   file: File;
@@ -280,6 +307,21 @@ export function useImageUtils() {
       return toBlob(out.buffer, out.mime);
     };
 
+    const runPipeline = async (file: File, options: PipelineOptions) => {
+      const out = await callWithFileInput(file, (worker, input) =>
+        worker.runPipeline(input, options),
+      );
+      return toBlob(out.buffer, out.mime);
+    };
+
+    const batchRunPipeline = async (jobs: Array<ImageBatchJob<PipelineOptions>>) => {
+      const normalizedJobs = normalizeBatchJobs(jobs);
+      const results = await callWithBatchInputs(normalizedJobs, (worker, workerJobs) =>
+        worker.batchRunPipeline(workerJobs),
+      );
+      return mapBatchResults(normalizedJobs, results);
+    };
+
     const mapBatchResults = <TOptions extends { format: EncodableImageFormat }>(
       normalizedJobs: Array<NormalizedBatchJob<TOptions>>,
       results: WorkerBatchResult[],
@@ -368,10 +410,12 @@ export function useImageUtils() {
       resize,
       crop,
       watermarkText,
+      runPipeline,
       batchConvert,
       batchCompress,
       batchResize,
       batchWatermarkText,
+      batchRunPipeline,
       fitWithinBox,
     };
   }, []);

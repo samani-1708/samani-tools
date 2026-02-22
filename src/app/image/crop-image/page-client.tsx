@@ -28,7 +28,7 @@ import {
   formatBytes,
   getBaseName,
 } from "../common/image-utils";
-import { QualitySlider } from "../common/quality-slider";
+import { QualityBlock } from "../common/quality-slider";
 import "./cropper.css";
 
 type FlipMode = "none" | "horizontal" | "vertical" | "both";
@@ -213,7 +213,7 @@ export function PageClient() {
   }
 
   return (
-    <div className="h-full overflow-x-hidden">
+    <div className="h-full overflow-y-auto">
       <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 space-y-4">
         {!result ? (
           <>
@@ -308,9 +308,12 @@ export function PageClient() {
               </Button>
             </div>
 
-            {!isPng && (
-              <QualitySlider value={quality} onChange={setQuality} disabled={isCropping} />
-            )}
+            <QualityBlock
+              value={quality}
+              onChange={setQuality}
+              disabled={isCropping}
+              format={isPng ? "image/png" : "image/jpeg"}
+            />
           </>
         ) : (
             <div className="space-y-4">

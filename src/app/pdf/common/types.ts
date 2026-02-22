@@ -2,6 +2,11 @@ export interface CompressOptions {
   mode?: "relaxed" | "strict";
 }
 
+export interface ExtractImagesOptions {
+  // Skip likely stencil/mask assets that commonly appear as solid black/white blocks.
+  skipLikelyMaskAssets?: boolean;
+}
+
 // Crop box defined as [xMin, yMin, xMax, yMax] in points
 export interface CropBox {
   x: number;      // left

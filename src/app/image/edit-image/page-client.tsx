@@ -277,7 +277,7 @@ export function PageClient() {
               }}
               
               Text={{
-                text: "thesamani.com",
+                text: "your-domain.com",
                 fontSize: 28,
                 fill: "#111827",
               }}

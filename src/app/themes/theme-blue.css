@@ -1,0 +1,69 @@
+/* Blue theme inspired by Telegram/Facebook accents */
+html[data-theme="blue"] {
+  --radius: 0.625rem;
+  --background: rgb(240 246 255);
+  --foreground: rgb(22 38 62);
+  --card: rgb(252 254 255);
+  --card-foreground: rgb(22 38 62);
+  --popover: rgb(252 254 255);
+  --popover-foreground: rgb(22 38 62);
+  --primary: rgb(24 119 242);
+  --primary-foreground: rgb(255 255 255);
+  --secondary: rgb(226 237 253);
+  --secondary-foreground: rgb(24 64 117);
+  --muted: rgb(231 240 252);
+  --muted-foreground: rgb(92 116 151);
+  --accent: rgb(210 226 249);
+  --accent-foreground: rgb(24 64 117);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: rgb(197 216 243);
+  --input: rgb(197 216 243);
+  --ring: rgb(24 119 242);
+  --chart-1: rgb(24 119 242);
+  --chart-2: rgb(47 154 245);
+  --chart-3: rgb(35 90 189);
+  --chart-4: rgb(123 172 246);
+  --chart-5: rgb(73 136 243);
+  --sidebar: rgb(233 242 254);
+  --sidebar-foreground: rgb(22 38 62);
+  --sidebar-primary: rgb(24 119 242);
+  --sidebar-primary-foreground: rgb(255 255 255);
+  --sidebar-accent: rgb(212 228 249);
+  --sidebar-accent-foreground: rgb(24 64 117);
+  --sidebar-border: rgb(197 216 243);
+  --sidebar-ring: rgb(24 119 242);
+}
+
+html.dark[data-theme="blue"] {
+  --background: rgb(16 24 39);
+  --foreground: rgb(223 233 247);
+  --card: rgb(23 35 57);
+  --card-foreground: rgb(223 233 247);
+  --popover: rgb(23 35 57);
+  --popover-foreground: rgb(223 233 247);
+  --primary: rgb(72 153 255);
+  --primary-foreground: rgb(10 23 44);
+  --secondary: rgb(31 46 72);
+  --secondary-foreground: rgb(223 233 247);
+  --muted: rgb(31 46 72);
+  --muted-foreground: rgb(143 166 201);
+  --accent: rgb(38 56 86);
+  --accent-foreground: rgb(223 233 247);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: rgb(49 73 114);
+  --input: rgb(49 73 114);
+  --ring: rgb(72 153 255);
+  --chart-1: rgb(72 153 255);
+  --chart-2: rgb(93 178 255);
+  --chart-3: rgb(61 123 221);
+  --chart-4: rgb(144 191 255);
+  --chart-5: rgb(104 163 255);
+  --sidebar: rgb(20 31 51);
+  --sidebar-foreground: rgb(223 233 247);
+  --sidebar-primary: rgb(72 153 255);
+  --sidebar-primary-foreground: rgb(10 23 44);
+  --sidebar-accent: rgb(38 56 86);
+  --sidebar-accent-foreground: rgb(223 233 247);
+  --sidebar-border: rgb(49 73 114);
+  --sidebar-ring: rgb(72 153 255);
+}

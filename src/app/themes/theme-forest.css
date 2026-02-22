@@ -1,0 +1,69 @@
+/* Forest anchored to rgb(0, 136, 71) */
+html[data-theme="forest"] {
+  --radius: 0.625rem;
+  --background: rgb(241 247 243);
+  --foreground: rgb(17 43 29);
+  --card: rgb(250 253 251);
+  --card-foreground: rgb(17 43 29);
+  --popover: rgb(250 253 251);
+  --popover-foreground: rgb(17 43 29);
+  --primary: rgb(0 136 71);
+  --primary-foreground: rgb(255 255 255);
+  --secondary: rgb(225 239 231);
+  --secondary-foreground: rgb(17 67 42);
+  --muted: rgb(232 241 236);
+  --muted-foreground: rgb(77 108 93);
+  --accent: rgb(210 232 219);
+  --accent-foreground: rgb(17 67 42);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: rgb(199 221 209);
+  --input: rgb(199 221 209);
+  --ring: rgb(0 136 71);
+  --chart-1: rgb(0 136 71);
+  --chart-2: rgb(63 171 115);
+  --chart-3: rgb(22 105 70);
+  --chart-4: rgb(121 189 102);
+  --chart-5: rgb(38 151 87);
+  --sidebar: rgb(236 245 239);
+  --sidebar-foreground: rgb(17 43 29);
+  --sidebar-primary: rgb(0 136 71);
+  --sidebar-primary-foreground: rgb(255 255 255);
+  --sidebar-accent: rgb(214 232 221);
+  --sidebar-accent-foreground: rgb(17 67 42);
+  --sidebar-border: rgb(199 221 209);
+  --sidebar-ring: rgb(0 136 71);
+}
+
+html.dark[data-theme="forest"] {
+  --background: rgb(15 27 21);
+  --foreground: rgb(225 241 233);
+  --card: rgb(24 39 31);
+  --card-foreground: rgb(225 241 233);
+  --popover: rgb(24 39 31);
+  --popover-foreground: rgb(225 241 233);
+  --primary: rgb(42 177 108);
+  --primary-foreground: rgb(8 28 18);
+  --secondary: rgb(31 50 40);
+  --secondary-foreground: rgb(225 241 233);
+  --muted: rgb(31 50 40);
+  --muted-foreground: rgb(145 181 161);
+  --accent: rgb(39 60 47);
+  --accent-foreground: rgb(225 241 233);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: rgb(48 74 60);
+  --input: rgb(48 74 60);
+  --ring: rgb(42 177 108);
+  --chart-1: rgb(42 177 108);
+  --chart-2: rgb(96 204 146);
+  --chart-3: rgb(33 132 91);
+  --chart-4: rgb(157 219 125);
+  --chart-5: rgb(75 187 124);
+  --sidebar: rgb(19 33 26);
+  --sidebar-foreground: rgb(225 241 233);
+  --sidebar-primary: rgb(42 177 108);
+  --sidebar-primary-foreground: rgb(8 28 18);
+  --sidebar-accent: rgb(39 60 47);
+  --sidebar-accent-foreground: rgb(225 241 233);
+  --sidebar-border: rgb(48 74 60);
+  --sidebar-ring: rgb(42 177 108);
+}

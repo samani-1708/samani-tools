@@ -3,6 +3,6 @@
 }
 
 .set-coordinates-example .set-coordinates-example__cropper {
-  max-height: 500px;
+  height: clamp(200px, calc(100dvh - 280px), 500px);
   background: #354146;
 }

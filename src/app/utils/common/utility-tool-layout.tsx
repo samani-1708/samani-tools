@@ -19,6 +19,9 @@ interface UtilityToolLayoutProps {
   controls: React.ReactNode;
   actions: React.ReactNode;
   secondaryActions?: React.ReactNode;
+  disabled?: boolean;
+  contentClassName?: string;
+  sidebarClassName?: string;
 }
 
 export function UtilityToolLayout({
@@ -29,15 +32,23 @@ export function UtilityToolLayout({
   controls,
   actions,
   secondaryActions,
+  disabled,
+  contentClassName,
+  sidebarClassName,
 }: UtilityToolLayoutProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const widthClass = sidebarWidth === "sm" ? "lg:w-80" : "lg:w-96";
 
   return (
-    <div className="h-full flex flex-col lg:flex-row overflow-hidden">
+    <div
+      className={cn(
+        "h-full flex flex-col lg:flex-row overflow-hidden",
+        disabled && "pointer-events-none"
+      )}
+    >
       {/* Content area */}
-      <div className="flex-1 p-4 sm:p-6 overflow-auto pb-24 lg:pb-6">
+      <div className={cn("flex-1 p-4 sm:p-6 overflow-auto pb-24 lg:pb-6", contentClassName)}>
         {content}
       </div>
 
@@ -45,21 +56,28 @@ export function UtilityToolLayout({
       <div
         className={cn(
           widthClass,
-          "hidden lg:flex border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-6 flex-col overflow-auto"
+          "hidden lg:flex border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-6 flex-col overflow-auto",
+          sidebarClassName
         )}
       >
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          {sidebarIcon}
-          {sidebarTitle}
-        </h2>
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold flex items-center gap-2 min-w-0">
+            {sidebarIcon}
+            <span className="truncate">{sidebarTitle}</span>
+          </h2>
+          {secondaryActions ? (
+            <div className="ml-auto shrink-0 [&_button]:w-auto [&_button]:h-9 [&_button>svg]:ml-1.5">
+              {secondaryActions}
+            </div>
+          ) : null}
+        </div>
         <div className="flex-1 flex flex-col">{controls}</div>
         <div className="mt-6 space-y-3">
           {actions}
-          {secondaryActions}
         </div>
       </div>
 
-      {/* Mobile sticky bottom bar */}
+      {/* Mobile sticky bottom bar — only primary action + settings */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-3 z-40">
         <Button
           onClick={() => setSheetOpen(true)}
@@ -68,8 +86,8 @@ export function UtilityToolLayout({
           className="flex-shrink-0 h-10"
           aria-label="Open settings"
         >
-          <SettingsIcon className="w-4 h-4 sm:mr-1.5" />
           <span className="hidden sm:inline">Settings</span>
+          <SettingsIcon className="w-4 h-4 sm:ml-1.5" />
         </Button>
         <div className="flex-1 min-w-0">{actions}</div>
       </div>

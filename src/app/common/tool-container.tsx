@@ -1,34 +1,46 @@
-"use client";
+import { Children, Fragment, isValidElement, type ReactElement } from "react";
 
-import { Suspense } from "react";
-import { useSectionVisibility } from "./section-visibility";
+function flattenNodes(nodes: React.ReactNode): React.ReactNode[] {
+  return Children.toArray(nodes).flatMap((node) => {
+    if (isValidElement(node) && node.type === Fragment) {
+      return flattenNodes(
+        (node as ReactElement<{ children?: React.ReactNode }>).props.children
+      );
+    }
 
-function ToolContainerInner({ children }: { children: React.ReactNode }) {
-  const { header } = useSectionVisibility();
-
-  return (
-    <div
-      className="w-full flex flex-col overflow-hidden"
-      style={{ height: header ? "calc(100vh - 64px)" : "100vh" }}
-    >
-      {children}
-    </div>
-  );
+    return [node];
+  });
 }
 
 export function ToolContainer({ children }: { children: React.ReactNode }) {
+  const childNodes = flattenNodes(children);
+
+  if (childNodes.length <= 1) {
+    return (
+      <div
+        className="w-full flex flex-col overflow-hidden"
+        style={{ height: "calc(100vh - 64px)" }}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  const [toolNode, ...seoNodes] = childNodes;
+
   return (
-    <Suspense
-      fallback={
-        <div
-          className="w-full flex flex-col overflow-hidden"
-          style={{ height: "calc(100vh - 64px)" }}
-        >
-          {children}
-        </div>
-      }
-    >
-      <ToolContainerInner>{children}</ToolContainerInner>
-    </Suspense>
+    <div className="w-full flex flex-col">
+      <div
+        className="w-full overflow-hidden"
+        style={{ height: "calc(100vh - 64px)" }}
+      >
+        {toolNode}
+      </div>
+      <div className="w-full">
+        {seoNodes.map((node, index) => (
+          <Fragment key={index}>{node}</Fragment>
+        ))}
+      </div>
+    </div>
   );
 }

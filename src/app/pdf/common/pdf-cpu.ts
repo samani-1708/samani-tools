@@ -2,6 +2,7 @@ import {
   CompressOptions,
   DecryptOptions,
   EncryptOptions,
+  ExtractImagesOptions,
   FileObject,
   ImageInput,
   ImageToPdfOptions,
@@ -16,12 +17,22 @@ interface WorkerRequest {
   args: string[];
   files: Array<{ name: string; buffer: ArrayBuffer }>;
   outputPaths: string[];
+  options?: {
+    skipLikelyMaskAssets?: boolean;
+  };
 }
 
 interface WorkerResponse {
   id: number;
   outputs?: Array<{ path: string; buffer: ArrayBuffer | null }>;
   error?: string;
+}
+
+const PDFCPU_WORKER_URL = "/js/pdfcpu/worker.js?v=20260222-3";
+
+export interface ExtractedAsset {
+  path: string;
+  buffer: ArrayBuffer;
 }
 
 export default class PDFCpuUtils implements IPdfUtilsLib {
@@ -34,7 +45,7 @@ export default class PDFCpuUtils implements IPdfUtilsLib {
 
   public static async init(): Promise<number> {
     if (!this.worker) {
-      this.worker = new Worker("/js/pdfcpu/worker.js", { type: "module" });
+      this.worker = new Worker(PDFCPU_WORKER_URL, { type: "module" });
       this.worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
         const { id, outputs, error } = e.data;
         const p = this.pending.get(id);
@@ -60,7 +71,8 @@ export default class PDFCpuUtils implements IPdfUtilsLib {
   private async runWorker(
     args: string[],
     files: Array<{ name: string; buffer: ArrayBuffer }>,
-    outputPaths: string[]
+    outputPaths: string[],
+    options?: WorkerRequest["options"],
   ): Promise<Map<string, ArrayBuffer | null>> {
     if (!PDFCpuUtils.worker) {
       await PDFCpuUtils.init();
@@ -73,7 +85,7 @@ export default class PDFCpuUtils implements IPdfUtilsLib {
 
       // Don't use transferables for input — structured clone copies them safely.
       // Transferables detach the source buffer which breaks if buffers are reused.
-      const msg: WorkerRequest = { id, args, files, outputPaths };
+      const msg: WorkerRequest = { id, args, files, outputPaths, options };
       PDFCpuUtils.worker!.postMessage(msg);
     });
   }
@@ -210,6 +222,28 @@ export default class PDFCpuUtils implements IPdfUtilsLib {
     args.push("/input/input.pdf", "/output/output.pdf");
 
     return this.run(args, [inputFile], "output.pdf");
+  }
+
+  public async extractImages(
+    file: FileObject,
+    options: ExtractImagesOptions = {},
+  ): Promise<ExtractedAsset[]> {
+    const inputFile = this.toInput(file.buffer, "input.pdf");
+    const outputMap = await this.runWorker(
+      ["extract", "-mode", "image", "/input/input.pdf", "/output/"],
+      [inputFile],
+      [],
+      { skipLikelyMaskAssets: !!options.skipLikelyMaskAssets },
+    );
+
+    const assets: ExtractedAsset[] = [];
+    for (const [path, buffer] of outputMap.entries()) {
+      if (!buffer) continue;
+      if (!/\.(png|jpg|jpeg|webp|tif|tiff|jp2)$/i.test(path)) continue;
+      assets.push({ path, buffer });
+    }
+
+    return assets;
   }
 
   public async watermarkText(

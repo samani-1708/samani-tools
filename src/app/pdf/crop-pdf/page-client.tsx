@@ -602,9 +602,8 @@ export function PageClient() {
       }
       secondaryActions={
         <>
-          <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
-            Start Over
-            <RotateCcwIcon className="w-4 h-4 ml-2" />
+          <Button variant="outline" onClick={handleReset} className="h-10 w-10 p-0" aria-label="Start over">
+            <RotateCcwIcon className="w-4 h-4" />
           </Button>
           {!isLoaded && (
             <p className="text-xs text-muted-foreground text-center mt-2">

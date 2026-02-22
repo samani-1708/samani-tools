@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { BuyMeACoffeeButton } from "../buy-me-a-coffee";
+import { BuyMeACoffeeButton } from "@/app/common/bmc";
 import {
   BRAND_NAME,
   IMAGE_TOOLS_HEADER,
@@ -29,6 +29,10 @@ import {
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const githubUrl = process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com";
+  const showGithub = process.env.NEXT_PUBLIC_ENABLE_GITHUB_CTA === "true";
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com";
+  const twitterUrl = process.env.NEXT_PUBLIC_TWITTER_URL || "https://x.com";
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev =>
@@ -238,20 +242,22 @@ export function SiteFooter() {
                   Terms of Service
                 </Link>
               </li>
+              {showGithub && (
+                <li>
+                  <a
+                    href={githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                  >
+                    Open Source
+                    <GithubIcon className="h-3 w-3" />
+                  </a>
+                </li>
+              )}
               <li>
                 <a
-                  href="https://github.com/samani-1708/samani-tools"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
-                >
-                  Open Source
-                  <GithubIcon className="h-3 w-3" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="mailto:support@samanitools.com"
+                  href={`mailto:${supportEmail}`}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
                 >
                   Contact Support
@@ -268,25 +274,23 @@ export function SiteFooter() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-muted-foreground">
             <span>© {currentYear} {BRAND_NAME}. All rights reserved.</span>
-            <span className="hidden md:inline">•</span>
-            <span className="flex items-center gap-1">
-              Made with <HeartIcon className="h-4 w-4 text-red-500 fill-red-500" /> for developers
-            </span>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Social Links */}
+            {showGithub && (
+              <a
+                href={githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="GitHub"
+              >
+                <GithubIcon className="h-5 w-5" />
+              </a>
+            )}
             <a
-              href="https://github.com/samani-1708/samani-tools"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="GitHub"
-            >
-              <GithubIcon className="h-5 w-5" />
-            </a>
-            <a
-              href="https://x.com/samani1708"
+              href={twitterUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"

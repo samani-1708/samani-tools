@@ -413,8 +413,8 @@ export function PageClient() {
               Reset Changes
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={handleReset}>
-            Start Over
+          <Button variant="outline" size="icon" onClick={handleReset} aria-label="Start over">
+            <RotateCcwIcon className="w-4 h-4" />
           </Button>
           {result ? (
             <Button onClick={handleDownload} size="sm">

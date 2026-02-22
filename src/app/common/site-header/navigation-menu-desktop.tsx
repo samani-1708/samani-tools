@@ -8,6 +8,7 @@ import {
   NavigationMenuTrigger,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
+import { LayoutGridIcon } from "lucide-react";
 import {
   IMAGE_TOOLS_HEADER,
   PDF_TOOLS_HEADER,
@@ -61,6 +62,10 @@ const ListItem = React.forwardRef<
 ListItem.displayName = "ListItem";
 
 export function NavigationMenuDesktop() {
+  const topPdfTools = PDF_TOOLS_HEADER.slice(0, 5);
+  const topImageTools = IMAGE_TOOLS_HEADER.slice(0, 5);
+  const topUtilityTools = UTILITY_TOOLS_HEADER.slice(0, 5);
+
   return (
     <NavigationMenu className="hidden md:flex">
       <NavigationMenuList>
@@ -69,7 +74,7 @@ export function NavigationMenuDesktop() {
           <NavigationMenuTrigger>PDF tools</NavigationMenuTrigger>
           <NavigationMenuContent>
             <div className="grid gap-3 p-4 md:w-[400px] lg:w-[600px] lg:grid-cols-2">
-              {PDF_TOOLS_HEADER.map((product) => (
+              {topPdfTools.map((product) => (
                 <ListItem
                   key={product.title}
                   title={product.title}
@@ -80,6 +85,14 @@ export function NavigationMenuDesktop() {
                   {product.description}
                 </ListItem>
               ))}
+              <ListItem
+                title="More PDF tools"
+                href="/pdf"
+                icon={LayoutGridIcon}
+                theme={PDF_TOOLS_HEADER[0].theme}
+              >
+                Browse the complete PDF toolkit.
+              </ListItem>
             </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
@@ -89,7 +102,7 @@ export function NavigationMenuDesktop() {
           <NavigationMenuTrigger>Image Tools</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[600px] lg:grid-cols-2">
-              {IMAGE_TOOLS_HEADER.map((product) => (
+              {topImageTools.map((product) => (
                 <ListItem
                   key={product.title}
                   title={product.title}
@@ -100,6 +113,14 @@ export function NavigationMenuDesktop() {
                   {product.description}
                 </ListItem>
               ))}
+              <ListItem
+                title="More image tools"
+                href="/image"
+                icon={LayoutGridIcon}
+                theme={IMAGE_TOOLS_HEADER[0].theme}
+              >
+                Browse the complete image toolkit.
+              </ListItem>
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
@@ -108,7 +129,7 @@ export function NavigationMenuDesktop() {
           <NavigationMenuTrigger>Utility Tools</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[600px] lg:grid-cols-2">
-              {UTILITY_TOOLS_HEADER.map((product) => (
+              {topUtilityTools.map((product) => (
                 <ListItem
                   key={product.title}
                   title={product.title}
@@ -119,6 +140,14 @@ export function NavigationMenuDesktop() {
                   {product.description}
                 </ListItem>
               ))}
+              <ListItem
+                title="More utility tools"
+                href="/utils"
+                icon={LayoutGridIcon}
+                theme={UTILITY_TOOLS_HEADER[0].theme}
+              >
+                Browse the complete utility toolkit.
+              </ListItem>
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>

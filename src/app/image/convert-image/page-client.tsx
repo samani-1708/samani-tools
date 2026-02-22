@@ -24,7 +24,7 @@ import {
   formatBytes,
   getBaseName,
 } from "../common/image-utils";
-import { QualitySlider } from "../common/quality-slider";
+import { QualityBlock } from "../common/quality-slider";
 
 const encodableFormats = IMAGE_FORMAT_OPTIONS.filter(
   (f): f is { mime: EncodableImageFormat; label: string; ext: string } =>
@@ -43,7 +43,7 @@ export function PageClient() {
 
   // 2) State
   const [targetFormat, setTargetFormat] = useState<OutputImageFormat>("image/jpeg");
-  const [quality, setQuality] = useState(90);
+  const [quality, setQuality] = useState(100);
   const [mode, setMode] = useState<ConversionMode>("balanced");
   const [isConverting, setIsConverting] = useState(false);
   const [supported, setSupported] = useState<Record<string, boolean>>({});
@@ -56,7 +56,6 @@ export function PageClient() {
 
   // 4) Derived props and state
   const file = files[0]?.file;
-  const showQuality = targetFormat !== "image/png" && targetFormat !== "image/tiff" && targetFormat !== "image/heic";
   const canConvert = Boolean(file) && !isConverting && isLoaded;
   const resultExt = useMemo(() => {
     return IMAGE_FORMAT_OPTIONS.find((item) => item.mime === targetFormat)?.ext || "img";
@@ -85,9 +84,10 @@ export function PageClient() {
     setResult(null);
 
     try {
+      const isLossy = targetFormat !== "image/png" && targetFormat !== "image/tiff";
       const blob = await imageUtils.convert(file, {
         format: targetFormat,
-        quality: showQuality ? quality / 100 : undefined,
+        quality: isLossy ? quality / 100 : undefined,
         mode,
       });
       const url = URL.createObjectURL(blob);
@@ -123,6 +123,7 @@ export function PageClient() {
       }
       toast.success("Image converted successfully");
     } catch (error) {
+      console.error("Conversion error", error);
       toast.error((error as Error).message || "Conversion failed");
     } finally {
       setIsConverting(false);
@@ -241,9 +242,12 @@ export function PageClient() {
             )}
           </div>
 
-          {showQuality && (
-            <QualitySlider value={quality} onChange={setQuality} disabled={isConverting} />
-          )}
+          <QualityBlock
+            value={quality}
+            onChange={setQuality}
+            disabled={isConverting}
+            format={targetFormat === "image/heic" ? null : targetFormat}
+          />
 
           <div className="space-y-2 mb-4">
             <Label htmlFor="conversion-mode">Conversion Mode</Label>
@@ -290,9 +294,8 @@ export function PageClient() {
         )
       }
       secondaryActions={
-        <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
-          Convert Another
-          <RotateCcwIcon className="w-4 h-4 ml-2" />
+        <Button variant="outline" size="icon" onClick={handleReset} aria-label="Convert another">
+          <RotateCcwIcon className="w-4 h-4" />
         </Button>
       }
     />

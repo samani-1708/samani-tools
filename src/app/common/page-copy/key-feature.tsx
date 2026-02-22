@@ -1,5 +1,9 @@
+import Image from "next/image";
+
 export interface FeatureItem {
   emoji?: string
+  icon?: string;
+  iconAlt?: string;
   title: string
   description: string
 }
@@ -29,9 +33,21 @@ export function KeyFeaturesSection({ header, subHeader, features = []}: KeyFeatu
             key={i}
             className="flex items-start gap-3 sm:gap-4 bg-muted/10 p-4 sm:p-5 rounded-lg border border-border shadow-sm"
           >
-            <div className="text-2xl pt-0.5">
-              {feature.emoji}
-            </div>
+            {feature.icon ? (
+              <div className="relative h-8 w-8 shrink-0 mt-0.5">
+                <Image
+                  src={feature.icon}
+                  alt={feature.iconAlt || feature.title}
+                  fill
+                  sizes="32px"
+                  className="object-contain"
+                />
+              </div>
+            ) : (
+              <div className="text-2xl pt-0.5">
+                {feature.emoji}
+              </div>
+            )}
             <div className="space-y-1">
               <h3 className="text-base sm:text-lg font-medium">{feature.title}</h3>
               <p className="text-sm sm:text-base text-muted-foreground">{feature.description}</p>

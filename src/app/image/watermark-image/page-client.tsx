@@ -30,7 +30,7 @@ import {
   formatBytes,
   getBaseName,
 } from "../common/image-utils";
-import { QualitySlider } from "../common/quality-slider";
+import { QualityBlock } from "../common/quality-slider";
 
 type Position =
   | "top-left"
@@ -122,13 +122,13 @@ export function PageClient() {
   // No props for this page component.
 
   // 2) State
-  const [text, setText] = useState("thesamani.com");
+  const [text, setText] = useState("your-domain.com");
   const [fontSize, setFontSize] = useState(36);
   const [opacity, setOpacity] = useState(100);
   const [color, setColor] = useState("#ffffff");
   const [position, setPosition] = useState<Position>("center");
   const [rotation, setRotation] = useState(0);
-  const [quality, setQuality] = useState(80);
+  const [quality, setQuality] = useState(100);
   const [isDownloading, setIsDownloading] = useState(false);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
   const canvasWrapRef = useRef<HTMLDivElement | null>(null);
@@ -141,7 +141,6 @@ export function PageClient() {
   // 4) Derived props and state
   const file = files[0]?.file;
   const format = useMemo(() => getOutputFormat(file?.type), [file?.type]);
-  const showQuality = format !== "image/png" && format !== "image/tiff";
   const isBusy = isDownloading;
   const debouncedPreview = useDebouncedValue(
     { text, fontSize, opacity, color, position, rotation },
@@ -231,6 +230,7 @@ export function PageClient() {
     if (!file || !isLoaded || !text.trim()) return;
     setIsDownloading(true);
     try {
+      const isLossyFmt = format !== "image/png" && format !== "image/tiff";
       const blob = await imageUtils.watermarkText(file, {
         text,
         fontSize,
@@ -239,7 +239,7 @@ export function PageClient() {
         position,
         rotation,
         format,
-        quality: showQuality ? quality / 100 : undefined,
+        quality: isLossyFmt ? quality / 100 : undefined,
       });
       downloadBlob(
         blob,
@@ -458,9 +458,12 @@ export function PageClient() {
             />
           </div>
 
-          {showQuality && (
-            <QualitySlider value={quality} onChange={setQuality} disabled={isBusy} />
-          )}
+          <QualityBlock
+            value={quality}
+            onChange={setQuality}
+            disabled={isBusy}
+            format={format}
+          />
 
           {!isLoaded && (
             <p className="text-xs text-muted-foreground mb-5">Loading image engine...</p>
@@ -483,12 +486,11 @@ export function PageClient() {
       secondaryActions={
         <Button
           variant="outline"
+          size="icon"
           onClick={handleReset}
-          className="w-full"
-          aria-label="Start over"
+          aria-label="Watermark another"
         >
-          Watermark Another
-          <RotateCcwIcon className="w-4 h-4 ml-2" />
+          <RotateCcwIcon className="w-4 h-4" />
         </Button>
       }
     />

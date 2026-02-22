@@ -510,11 +510,10 @@ export function PageClient() {
         <Button
           variant="outline"
           onClick={handleReset}
-          className="w-full"
+          className="h-10 w-10 p-0"
           aria-label="Start over"
         >
-          Start Over
-          <RotateCcwIcon className="w-4 h-4 ml-2" />
+          <RotateCcwIcon className="w-4 h-4" />
         </Button>
       }
     />

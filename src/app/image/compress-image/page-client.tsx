@@ -24,7 +24,8 @@ import {
   formatBytes,
   getBaseName,
 } from "../common/image-utils";
-import { QualitySlider } from "../common/quality-slider";
+import { QualityBlock } from "../common/quality-slider";
+import type { QualityFormatContext } from "../common/quality-slider";
 
 const sizeOptions = [
   { label: "Keep original", value: "0" },
@@ -241,8 +242,13 @@ export function PageClient() {
             </div>
           </div>
 
-          {/* Quality slider */}
-          <QualitySlider value={quality} onChange={setQuality} disabled={isCompressing} />
+          {/* Quality slider — hidden automatically for lossless formats */}
+          <QualityBlock
+            value={quality}
+            onChange={setQuality}
+            disabled={isCompressing}
+            format={outputFormat as QualityFormatContext}
+          />
 
           {/* Output format */}
           <div className="space-y-2 mb-5 mt-4">
@@ -352,9 +358,8 @@ export function PageClient() {
         )
       }
       secondaryActions={
-        <Button variant="outline" onClick={handleReset} className="w-full" aria-label="Start over">
-          Start Over
-          <RotateCcwIcon className="w-4 h-4 ml-2" />
+        <Button variant="outline" size="icon" onClick={handleReset} aria-label="Start over">
+          <RotateCcwIcon className="w-4 h-4" />
         </Button>
       }
     />
