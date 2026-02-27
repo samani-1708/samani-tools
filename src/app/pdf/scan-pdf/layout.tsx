@@ -1,5 +1,3 @@
-import "@/app/common/styles/typography.css";
-
 export default function Layout({
   children,
 }: {

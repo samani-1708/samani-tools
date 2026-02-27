@@ -1,0 +1,4 @@
+@reference "../../globals.css";
+@source "../../pdf/extract-content/**/*.{ts,tsx}";
+@source "../../utils/markdown-viewer/**/*.{ts,tsx}";
+@plugin "@tailwindcss/typography";

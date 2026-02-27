@@ -6,6 +6,7 @@ export const PDF_TOOL_ROUTES = [
   "/pdf/crop-pdf",
   "/pdf/image-to-pdf",
   "/pdf/rotate-pdf",
+  "/pdf/scan-pdf",
   "/pdf/lock-pdf",
   "/pdf/unlock-pdf",
   "/pdf/organize-pdf",

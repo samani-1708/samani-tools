@@ -66,6 +66,7 @@
     "next-themes": "^0.4.6",
     "pdf-lib": "^1.17.1",
     "pdfcpu-wasm": "^0.1.0",
+    "peerjs": "^1.5.5",
     "pica": "^9.0.1",
     "qr-code-styling": "^1.9.2",
     "qrcode": "^1.5.4",

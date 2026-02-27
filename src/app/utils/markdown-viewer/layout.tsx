@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { createMetadata } from "@/app/common/seo";
+import "@/app/common/styles/typography.css";
 
 export const metadata: Metadata = createMetadata({
   title: "Markdown Viewer",

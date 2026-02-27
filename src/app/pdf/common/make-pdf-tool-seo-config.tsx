@@ -94,6 +94,7 @@ const relatedToolMap: Record<string, string[]> = {
   "/pdf/unlock-pdf": ["/pdf/lock-pdf", "/pdf/edit-pdf", "/pdf/organize-pdf"],
   "/pdf/edit-pdf": ["/pdf/organize-pdf", "/pdf/merge-pdf", "/pdf/watermark-pdf"],
   "/pdf/image-to-pdf": ["/pdf/merge-pdf", "/pdf/compress-pdf", "/pdf/organize-pdf"],
+  "/pdf/scan-pdf": ["/pdf/image-to-pdf", "/pdf/organize-pdf", "/pdf/merge-pdf"],
   "/pdf/extract-content": ["/pdf/chat-pdf", "/pdf/edit-pdf", "/pdf/organize-pdf"],
   "/pdf/chat-pdf": ["/pdf/extract-content", "/pdf/merge-pdf", "/pdf/edit-pdf"],
 };

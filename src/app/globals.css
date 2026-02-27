@@ -6,7 +6,6 @@
 @import "./themes/theme-blue.css";
 @import "./themes/theme-lavender.css";
 @import "./themes/theme-beach.css";
-@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 

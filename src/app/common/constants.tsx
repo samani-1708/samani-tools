@@ -150,6 +150,15 @@ const IMAGE_TO_PDF: ToolInfo = {
     "Convert images to PDF format with ease. Supports multiple image formats.",
 } as const;
 
+const SCAN_PDF: ToolInfo = {
+  title: "Scan PDF",
+  href: "/pdf/scan-pdf",
+  icon: QrCodeIcon,
+  theme: COLOR_TOKENS.EMERALD,
+  description:
+    "Scan with your phone camera, send pages to desktop, then merge into one PDF.",
+} as const;
+
 const ROTATE_PDF: ToolInfo = {
   title: "Rotate PDF",
   href: "/pdf/rotate-pdf",
@@ -232,6 +241,7 @@ export const PDF_TOOLS_HEADER: ToolInfo[] = [
   WATERMARK_PDF,
   CROP_PDF,
   IMAGE_TO_PDF,
+  SCAN_PDF,
   ROTATE_PDF,
   LOCK_PDF,
   UNLOCK_PDF,
