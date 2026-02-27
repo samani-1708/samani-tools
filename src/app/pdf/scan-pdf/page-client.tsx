@@ -28,17 +28,15 @@ import {
   SmartphoneIcon,
   SwitchCameraIcon,
   Trash2Icon,
-  UsersIcon,
 } from "lucide-react";
-import Cropper, { Area } from "react-easy-crop";
+import { Cropper } from "react-advanced-cropper";
+import type { CropperRef } from "react-advanced-cropper";
 import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
-import { DataConnection, Peer } from "peerjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { createPDFBlobURL, downloadLink } from "@/app/common/utils";
-
-type PeerState = "initializing" | "waiting" | "connected" | "error";
+import "../../image/crop-image/cropper.css";
 
 type CropRect = {
   x: number;
@@ -50,21 +48,11 @@ type CropRect = {
 type ScanImage = {
   id: string;
   name: string;
+  originalBlob: Blob;
   url: string;
   blob: Blob;
   rotation: number;
-  crop?: CropRect;
-};
-
-type CaptureMeta = {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  width: number;
-  height: number;
-  createdAt: number;
-  totalChunks: number;
+  wasCropped?: boolean;
 };
 
 type CaptureSettings = {
@@ -73,103 +61,14 @@ type CaptureSettings = {
   autoCrop: boolean;
 };
 
-type WireMessage =
-  | { type: "hello"; device: "mobile" | "desktop" }
-  | { type: "settings"; payload: CaptureSettings }
-  | { type: "capture-meta"; payload: CaptureMeta }
-  | { type: "capture-chunk"; id: string; index: number; data: string }
-  | { type: "capture-complete"; id: string }
-  | { type: "ping" };
-
-type IncomingBuffer = {
-  meta: CaptureMeta;
-  chunks: string[];
-  totalChunks: number;
-};
-
-const CHUNK_SIZE = 24 * 1024;
 const ROOM_KEY = "scan-pdf-room-id-v1";
-const SETTINGS_KEY = "scan-pdf-capture-settings-v1";
-const PEER_OPTIONS = {
-  host: "0.peerjs.com",
-  port: 443,
-  path: "/",
-  secure: true,
-  debug: 2,
-  config: {
-    iceTransportPolicy: "relay",
-    iceServers: [
-      {
-        urls: ["turn:eu-0.turn.peerjs.com:3478", "turn:us-0.turn.peerjs.com:3478"],
-        username: "peerjs",
-        credential: "peerjsp",
-      },
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:openrelay.metered.ca:80" },
-      {
-        urls: "turn:openrelay.metered.ca:80",
-        username: "openrelayproject",
-        credential: "openrelayproject",
-      },
-      {
-        urls: "turn:openrelay.metered.ca:443",
-        username: "openrelayproject",
-        credential: "openrelayproject",
-      },
-      {
-        urls: "turns:openrelay.metered.ca:443",
-        username: "openrelayproject",
-        credential: "openrelayproject",
-      },
-    ],
-  },
-} as const;
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function makeId(prefix: string) {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 function makeRoomId() {
   return `scan-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
-function base64ToBytes(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
-function concatBytes(parts: Uint8Array[]): Uint8Array {
-  const total = parts.reduce((acc, part) => acc + part.length, 0);
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const part of parts) {
-    out.set(part, offset);
-    offset += part.length;
-  }
-  return out;
-}
-
-async function blobToBytes(blob: Blob): Promise<Uint8Array> {
-  return new Uint8Array(await blob.arrayBuffer());
 }
 
 async function canvasToBlob(canvas: HTMLCanvasElement, type = "image/jpeg", quality = 0.92): Promise<Blob> {
@@ -194,7 +93,8 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 async function renderTransformedImage(item: ScanImage): Promise<Blob> {
-  const img = await loadImage(item.url);
+  const localUrl = URL.createObjectURL(item.blob);
+  const img = await loadImage(localUrl).finally(() => URL.revokeObjectURL(localUrl));
   const normalizedRotation = ((item.rotation % 360) + 360) % 360;
   const radians = (normalizedRotation * Math.PI) / 180;
 
@@ -211,25 +111,7 @@ async function renderTransformedImage(item: ScanImage): Promise<Blob> {
   rotatedCtx.translate(rotatedWidth / 2, rotatedHeight / 2);
   rotatedCtx.rotate(radians);
   rotatedCtx.drawImage(img, -img.width / 2, -img.height / 2);
-
-  if (!item.crop) {
-    return canvasToBlob(rotatedCanvas, "image/jpeg", 0.92);
-  }
-
-  const sx = clamp(Math.round(item.crop.x), 0, rotatedCanvas.width - 1);
-  const sy = clamp(Math.round(item.crop.y), 0, rotatedCanvas.height - 1);
-  const sw = clamp(Math.round(item.crop.width), 1, rotatedCanvas.width - sx);
-  const sh = clamp(Math.round(item.crop.height), 1, rotatedCanvas.height - sy);
-
-  const outCanvas = document.createElement("canvas");
-  outCanvas.width = sw;
-  outCanvas.height = sh;
-
-  const outCtx = outCanvas.getContext("2d");
-  if (!outCtx) throw new Error("Failed to crop image");
-
-  outCtx.drawImage(rotatedCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
-  return canvasToBlob(outCanvas, "image/jpeg", 0.92);
+  return canvasToBlob(rotatedCanvas, "image/jpeg", 0.92);
 }
 
 function detectDocumentBox(canvas: HTMLCanvasElement): CropRect | null {
@@ -307,259 +189,27 @@ function detectDocumentBox(canvas: HTMLCanvasElement): CropRect | null {
 
 function SessionHost() {
   const [roomId, setRoomId] = useState("");
-  const [peerState, setPeerState] = useState<PeerState>("initializing");
   const [mobileLink, setMobileLink] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [images, setImages] = useState<ScanImage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<{ url: string; filename: string } | null>(null);
-  const [connectedPeers, setConnectedPeers] = useState<string[]>([]);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
-
-  const [captureSettings, setCaptureSettings] = useState<CaptureSettings>({
-    maxWidth: 1800,
-    jpegQuality: 0.9,
-    autoCrop: true,
-  });
-  const captureSettingsRef = useRef<CaptureSettings>({
-    maxWidth: 1800,
-    jpegQuality: 0.9,
-    autoCrop: true,
-  });
+  const [isApplyingCrop, setIsApplyingCrop] = useState(false);
 
   const [editorId, setEditorId] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [cropPixels, setCropPixels] = useState<Area | null>(null);
+  const cropperRef = useRef<CropperRef>(null);
 
-  const peerRef = useRef<Peer | null>(null);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const connectionsRef = useRef<Map<string, DataConnection>>(new Map());
-  const incomingRef = useRef<Map<string, IncomingBuffer>>(new Map());
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const imagesRef = useRef<ScanImage[]>([]);
+  const sinceRef = useRef(0);
 
   const [isPdfReady, pdfUtils] = usePDFUtils();
-
-  const editorImage = useMemo(
-    () => images.find((item) => item.id === editorId) ?? null,
-    [images, editorId],
-  );
+  const editorImage = useMemo(() => images.find((item) => item.id === editorId) ?? null, [images, editorId]);
+  const [editorBlobUrl, setEditorBlobUrl] = useState<string>("");
 
   const cleanupImageUrls = useCallback((current: ScanImage[]) => {
-    for (const item of current) {
-      URL.revokeObjectURL(item.url);
-    }
+    for (const item of current) URL.revokeObjectURL(item.url);
   }, []);
-
-  const pushLog = useCallback((entry: string) => {
-    const line = `${new Date().toLocaleTimeString()} ${entry}`;
-    setDebugLog((prev) => [...prev.slice(-79), line]);
-  }, []);
-
-  const broadcast = useCallback((message: WireMessage) => {
-    for (const conn of connectionsRef.current.values()) {
-      if (conn.open) conn.send(message);
-    }
-  }, []);
-
-  useEffect(() => {
-    captureSettingsRef.current = captureSettings;
-  }, [captureSettings]);
-
-  const handleIncomingMessage = useCallback((sourcePeer: string, raw: unknown) => {
-    const message = raw as WireMessage;
-    if (!message || typeof message !== "object" || !("type" in message)) return;
-
-    if (message.type === "capture-meta") {
-      const key = `${sourcePeer}:${message.payload.id}`;
-      incomingRef.current.set(key, {
-        meta: message.payload,
-        chunks: new Array(message.payload.totalChunks),
-        totalChunks: message.payload.totalChunks,
-      });
-      return;
-    }
-
-    if (message.type === "capture-chunk") {
-      const key = `${sourcePeer}:${message.id}`;
-      const slot = incomingRef.current.get(key);
-      if (!slot) return;
-      if (message.index < 0 || message.index >= slot.totalChunks) return;
-      slot.chunks[message.index] = message.data;
-      return;
-    }
-
-    if (message.type === "capture-complete") {
-      const key = `${sourcePeer}:${message.id}`;
-      const slot = incomingRef.current.get(key);
-      if (!slot) return;
-      if (slot.chunks.some((chunk) => !chunk)) {
-        toast.error("An image packet was incomplete. Please capture again.");
-        incomingRef.current.delete(key);
-        return;
-      }
-
-      const bytes = concatBytes(slot.chunks.map((chunk) => base64ToBytes(chunk)));
-      const blob = new Blob([bytes], { type: slot.meta.type || "image/jpeg" });
-      const url = URL.createObjectURL(blob);
-
-      setImages((prev) => [
-        ...prev,
-        {
-          id: `${sourcePeer}-${slot.meta.id}`,
-          name: slot.meta.name,
-          blob,
-          url,
-          rotation: 0,
-        },
-      ]);
-
-      incomingRef.current.delete(key);
-    }
-  }, []);
-
-  const closePeer = useCallback(() => {
-    if (reconnectTimerRef.current) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
-    }
-    for (const conn of connectionsRef.current.values()) {
-      conn.close();
-    }
-    connectionsRef.current.clear();
-    peerRef.current?.destroy();
-    peerRef.current = null;
-    setConnectedPeers([]);
-  }, []);
-
-  const startPeer = useCallback(async (id: string) => {
-    closePeer();
-    setPeerState("initializing");
-
-    const peer = new Peer(id, PEER_OPTIONS);
-    pushLog(`host peer init: ${id}`);
-
-    peerRef.current = peer;
-
-    peer.on("open", async (openedId) => {
-      pushLog(`host peer open: ${openedId}`);
-      setRoomId(openedId);
-      setPeerState("waiting");
-      const origin = window.location.origin;
-      const path = window.location.pathname;
-      const url = `${origin}${path}?mobile=1&host=${encodeURIComponent(openedId)}`;
-      setMobileLink(url);
-      localStorage.setItem(ROOM_KEY, openedId);
-
-      try {
-        const dataUrl = await QRCode.toDataURL(url, {
-          margin: 1,
-          width: 240,
-          color: { dark: "#0f172a", light: "#ffffff" },
-        });
-        setQrDataUrl(dataUrl);
-      } catch {
-        setQrDataUrl("");
-      }
-    });
-
-    peer.on("connection", (conn) => {
-      pushLog(`incoming conn from ${conn.peer}`);
-      connectionsRef.current.set(conn.peer, conn);
-      setConnectedPeers(Array.from(connectionsRef.current.keys()));
-
-      conn.on("open", () => {
-        pushLog(`conn open ${conn.peer}`);
-        setPeerState("connected");
-        conn.send({ type: "hello", device: "desktop" } as WireMessage);
-        conn.send({ type: "settings", payload: captureSettingsRef.current } as WireMessage);
-      });
-
-      conn.on("data", (raw) => handleIncomingMessage(conn.peer, raw));
-
-      const onClosed = () => {
-        pushLog(`conn closed ${conn.peer}`);
-        connectionsRef.current.delete(conn.peer);
-        const peers = Array.from(connectionsRef.current.keys());
-        setConnectedPeers(peers);
-        setPeerState(peers.length > 0 ? "connected" : "waiting");
-      };
-
-      conn.on("close", onClosed);
-      conn.on("error", (error) => {
-        pushLog(`conn error ${conn.peer}: ${String((error as Error).message || error)}`);
-        onClosed();
-      });
-    });
-
-    peer.on("error", (error) => {
-      pushLog(`host peer error: ${String((error as { type?: string }).type || (error as Error).message || error)}`);
-      if ((error as { type?: string }).type === "unavailable-id") {
-        const next = makeRoomId();
-        startPeer(next).catch(() => setPeerState("error"));
-        return;
-      }
-      setPeerState("error");
-    });
-
-    peer.on("disconnected", () => {
-      pushLog("host peer disconnected; attempting reconnect");
-      setPeerState("waiting");
-      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = setTimeout(() => {
-        if (!peer.destroyed && peer.disconnected) {
-          try {
-            peer.reconnect();
-            pushLog("host peer reconnect() called");
-          } catch {
-            setPeerState("error");
-          }
-        }
-      }, 800);
-    });
-  }, [closePeer, handleIncomingMessage, pushLog]);
-
-  useEffect(() => {
-    const savedRoom = localStorage.getItem(ROOM_KEY) || makeRoomId();
-    const rawSettings = localStorage.getItem(SETTINGS_KEY);
-    if (rawSettings) {
-      try {
-        const parsed = JSON.parse(rawSettings) as CaptureSettings;
-        setCaptureSettings({
-          maxWidth: clamp(parsed.maxWidth || 1800, 1000, 2600),
-          jpegQuality: clamp(parsed.jpegQuality || 0.9, 0.5, 1),
-          autoCrop: Boolean(parsed.autoCrop),
-        });
-      } catch {
-        // ignore stale storage
-      }
-    }
-
-    startPeer(savedRoom).catch(() => setPeerState("error"));
-    pushLog(`boot room: ${savedRoom}`);
-
-    return () => {
-      closePeer();
-    };
-  }, [closePeer, pushLog, startPeer]);
-
-  useEffect(() => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(captureSettings));
-    broadcast({ type: "settings", payload: captureSettings });
-  }, [broadcast, captureSettings]);
-
-  useEffect(() => {
-    return () => {
-      cleanupImageUrls(images);
-      if (result?.url) URL.revokeObjectURL(result.url);
-    };
-  }, [cleanupImageUrls, images, result?.url]);
-
-  useEffect(() => {
-    if (!editorImage?.crop) return;
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setCropPixels(editorImage.crop);
-  }, [editorImage?.id, editorImage?.crop]);
 
   const updateImage = useCallback((id: string, updater: (current: ScanImage) => ScanImage) => {
     setImages((prev) => prev.map((item) => (item.id === id ? updater(item) : item)));
@@ -586,42 +236,91 @@ function SessionHost() {
     });
   }, []);
 
-  const resetSession = useCallback(() => {
+  const resetSession = useCallback(async () => {
     setImages((prev) => {
       cleanupImageUrls(prev);
       return [];
     });
+    seenIdsRef.current = new Set();
+    sinceRef.current = 0;
     setEditorId(null);
     if (result?.url) {
       URL.revokeObjectURL(result.url);
       setResult(null);
     }
-  }, [cleanupImageUrls, result?.url]);
+    if (roomId) {
+      await fetch(`/api/scan-pdf/session?room=${encodeURIComponent(roomId)}`, { method: "DELETE" }).catch(() => undefined);
+    }
+  }, [cleanupImageUrls, result?.url, roomId]);
 
-  const applyCrop = useCallback(() => {
-    if (!editorImage || !cropPixels) {
+  const applyCrop = useCallback(async () => {
+    if (!editorImage) {
       setEditorId(null);
       return;
     }
 
-    updateImage(editorImage.id, (current) => ({
-      ...current,
-      crop: {
-        x: cropPixels.x,
-        y: cropPixels.y,
-        width: cropPixels.width,
-        height: cropPixels.height,
-      },
-    }));
+    const coordinates = cropperRef.current?.getCoordinates();
+    if (!coordinates) {
+      setEditorId(null);
+      return;
+    }
 
+    setIsApplyingCrop(true);
+    try {
+      const sourceUrl = URL.createObjectURL(editorImage.blob);
+      const img = await loadImage(sourceUrl).finally(() => URL.revokeObjectURL(sourceUrl));
+
+      const sx = clamp(Math.round(coordinates.left), 0, img.width - 1);
+      const sy = clamp(Math.round(coordinates.top), 0, img.height - 1);
+      const sw = clamp(Math.round(coordinates.width), 1, img.width - sx);
+      const sh = clamp(Math.round(coordinates.height), 1, img.height - sy);
+
+      const outCanvas = document.createElement("canvas");
+      outCanvas.width = sw;
+      outCanvas.height = sh;
+      const outCtx = outCanvas.getContext("2d");
+      if (!outCtx) throw new Error("Failed to crop image");
+
+      outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+      const croppedBlob = await canvasToBlob(outCanvas, "image/jpeg", 0.92);
+      const croppedUrl = URL.createObjectURL(croppedBlob);
+
+      updateImage(editorImage.id, (current) => {
+        URL.revokeObjectURL(current.url);
+        return {
+          ...current,
+          blob: croppedBlob,
+          url: croppedUrl,
+          wasCropped: true,
+        };
+      });
+      setEditorId(null);
+    } catch {
+      toast.error("Failed to crop image");
+    } finally {
+      setIsApplyingCrop(false);
+    }
+  }, [editorImage, updateImage]);
+
+  const resetCrop = useCallback(() => {
+    if (!editorImage) return;
+    const originalUrl = URL.createObjectURL(editorImage.originalBlob);
+    updateImage(editorImage.id, (current) => {
+      URL.revokeObjectURL(current.url);
+      return {
+        ...current,
+        blob: current.originalBlob,
+        url: originalUrl,
+        wasCropped: false,
+      };
+    });
     setEditorId(null);
-  }, [cropPixels, editorImage, updateImage]);
+  }, [editorImage, updateImage]);
 
   const exportPdf = useCallback(async () => {
     if (!isPdfReady || images.length === 0 || isGenerating) return;
 
     setIsGenerating(true);
-
     try {
       const transformed = await Promise.all(images.map((item) => renderTransformedImage(item)));
       const buffers = await Promise.all(transformed.map((blob) => blob.arrayBuffer()));
@@ -647,6 +346,144 @@ function SessionHost() {
     }
   }, [images, isGenerating, isPdfReady, pdfUtils, result?.url]);
 
+  const initializeRoom = useCallback(async (preferred?: string) => {
+    const picked = preferred || localStorage.getItem(ROOM_KEY) || makeRoomId();
+    const body = JSON.stringify({ roomId: picked });
+    const res = await fetch("/api/scan-pdf/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+
+    if (!res.ok) throw new Error("Unable to initialize room");
+
+    localStorage.setItem(ROOM_KEY, picked);
+    setRoomId(picked);
+
+    const origin = window.location.origin;
+    const path = window.location.pathname;
+    const url = `${origin}${path}?mobile=1&room=${encodeURIComponent(picked)}`;
+    setMobileLink(url);
+
+    const qr = await QRCode.toDataURL(url, {
+      margin: 1,
+      width: 240,
+      color: { dark: "#0f172a", light: "#ffffff" },
+    });
+    setQrDataUrl(qr);
+  }, []);
+
+  useEffect(() => {
+    initializeRoom().catch(() => {
+      toast.error("Unable to create scan room");
+    });
+  }, [initializeRoom]);
+
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
+  useEffect(() => {
+    if (!result?.url) return;
+    URL.revokeObjectURL(result.url);
+    setResult(null);
+  }, [images]);
+
+  useEffect(() => {
+    if (!editorImage) {
+      setEditorBlobUrl("");
+      return;
+    }
+
+    const url = URL.createObjectURL(editorImage.blob);
+    setEditorBlobUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [editorImage]);
+
+  useEffect(() => {
+    if (!roomId) return;
+
+    let timerId: number | null = null;
+    let cancelled = false;
+    let hasShownManifestError = false;
+    let delayMs = 1500;
+
+    const tick = async () => {
+      if (cancelled) return;
+      try {
+        if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+          delayMs = 3000;
+          return;
+        }
+
+        const res = await fetch(`/api/scan-pdf/manifest?room=${encodeURIComponent(roomId)}&since=${sinceRef.current}`, { cache: "no-store" });
+        if (!res.ok) {
+          if (!hasShownManifestError && res.status === 404) {
+            hasShownManifestError = true;
+            toast.error("Scan API route not found. Restart dev server or redeploy latest build.");
+          }
+          delayMs = 2500;
+          return;
+        }
+        const payload = (await res.json()) as {
+          images: Array<{ id: string; name: string; createdAt: number }>;
+          serverTime: number;
+        };
+
+        if (cancelled) return;
+
+        let foundNewImage = false;
+        let nextSince = Math.max(sinceRef.current, payload.serverTime || 0);
+
+        if (Array.isArray(payload.images) && payload.images.length > 0) {
+          for (const item of payload.images) {
+            if (seenIdsRef.current.has(item.id)) continue;
+
+            const imgRes = await fetch(`/api/scan-pdf/image?room=${encodeURIComponent(roomId)}&id=${encodeURIComponent(item.id)}&consume=1`, {
+              cache: "no-store",
+            });
+            if (!imgRes.ok) continue;
+
+            const blob = await imgRes.blob();
+            const url = URL.createObjectURL(blob);
+            seenIdsRef.current.add(item.id);
+
+            setImages((prev) => [...prev, { id: item.id, name: item.name, originalBlob: blob, blob, url, rotation: 0 }]);
+            nextSince = Math.max(nextSince, item.createdAt);
+            foundNewImage = true;
+          }
+        }
+
+        sinceRef.current = nextSince;
+        delayMs = foundNewImage ? 600 : 2000;
+      } catch {
+        delayMs = 3000;
+      } finally {
+        if (!cancelled) {
+          timerId = window.setTimeout(tick, delayMs);
+        }
+      }
+    };
+
+    tick();
+
+    return () => {
+      cancelled = true;
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    };
+  }, [roomId]);
+
+  useEffect(() => {
+    return () => {
+      cleanupImageUrls(imagesRef.current);
+      if (result?.url) URL.revokeObjectURL(result.url);
+    };
+  }, [cleanupImageUrls, result?.url]);
+
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -654,21 +491,12 @@ function SessionHost() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold">Scan PDF Session</h2>
-              <p className="text-sm text-muted-foreground">
-                Pair phone and desktop, capture pages on mobile, then merge here.
-              </p>
+              <p className="text-sm text-muted-foreground">QR pair phone, capture pages, and merge on desktop.</p>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
+              <span className="inline-block h-2 w-2 rounded-full bg-primary" />
               <MonitorIcon className="h-4 w-4" />
-              <span>
-                {peerState === "connected"
-                  ? "Phone connected"
-                  : peerState === "waiting"
-                    ? "Waiting for phone"
-                    : peerState === "error"
-                      ? "Connection issue"
-                      : "Preparing session"}
-              </span>
+              Room Ready
             </div>
           </div>
 
@@ -676,8 +504,7 @@ function SessionHost() {
             <div className="space-y-4">
               <div className="rounded-lg border bg-background p-4">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <QrCodeIcon className="h-4 w-4" />
-                  Connect Phone
+                  <QrCodeIcon className="h-4 w-4" /> Connect Phone
                 </div>
                 <div className="mt-3 flex min-h-60 items-center justify-center rounded-md border bg-white p-2">
                   {qrDataUrl ? (
@@ -688,11 +515,7 @@ function SessionHost() {
                   )}
                 </div>
                 <div className="mt-3 text-xs break-all text-muted-foreground">Room: {roomId || "..."}</div>
-                <div className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <UsersIcon className="h-3 w-3" />
-                  {connectedPeers.length} phone(s) connected
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <Button
                     variant="outline"
                     onClick={async () => {
@@ -701,87 +524,36 @@ function SessionHost() {
                       toast.success("Mobile link copied");
                     }}
                     disabled={!mobileLink}
+                    className="w-full"
                   >
-                    <CopyIcon className="h-4 w-4" />
-                    Copy Link
+                    <CopyIcon className="h-4 w-4" /> Copy Link
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      const fresh = makeRoomId();
-                      startPeer(fresh).catch(() => setPeerState("error"));
+                    onClick={async () => {
+                      try {
+                        await resetSession();
+                        await initializeRoom(makeRoomId());
+                      } catch {
+                        toast.error("Failed to rotate room");
+                      }
                     }}
+                    className="w-full border-accent bg-accent/20 text-accent-foreground hover:bg-accent/30"
                   >
-                    <RefreshCcwIcon className="h-4 w-4" />
-                    New Room
+                    <RefreshCcwIcon className="h-4 w-4" /> New Room
                   </Button>
-                </div>
-              </div>
-
-              <div className="rounded-lg border bg-background p-4">
-                <h3 className="text-sm font-medium">Mobile Capture Settings</h3>
-                <div className="mt-3 space-y-3 text-sm">
-                  <div>
-                    <Label htmlFor="scan-setting-width">Image width: {captureSettings.maxWidth}px</Label>
-                    <input
-                      id="scan-setting-width"
-                      type="range"
-                      min={1000}
-                      max={2600}
-                      step={100}
-                      value={captureSettings.maxWidth}
-                      onChange={(event) =>
-                        setCaptureSettings((prev) => ({ ...prev, maxWidth: Number(event.target.value) }))
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="scan-setting-quality">
-                      JPEG quality: {Math.round(captureSettings.jpegQuality * 100)}%
-                    </Label>
-                    <input
-                      id="scan-setting-quality"
-                      type="range"
-                      min={0.5}
-                      max={1}
-                      step={0.05}
-                      value={captureSettings.jpegQuality}
-                      onChange={(event) =>
-                        setCaptureSettings((prev) => ({ ...prev, jpegQuality: Number(event.target.value) }))
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={captureSettings.autoCrop}
-                      onChange={(event) =>
-                        setCaptureSettings((prev) => ({ ...prev, autoCrop: event.target.checked }))
-                      }
-                    />
-                    Auto detect + crop document
-                  </label>
-                </div>
-              </div>
-
-              <div className="rounded-lg border bg-background p-4">
-                <h3 className="text-sm font-medium">Connection Debug</h3>
-                <div className="mt-2 max-h-40 overflow-auto rounded border bg-muted/30 p-2 text-[11px] font-mono">
-                  {debugLog.length === 0 ? "No events yet." : debugLog.map((line) => <div key={line}>{line}</div>)}
                 </div>
               </div>
             </div>
 
             <div className="rounded-lg border bg-background p-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div>
                   <h3 className="font-medium">Captured Pages</h3>
                   <p className="text-sm text-muted-foreground">{images.length} page(s) in this session</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={exportPdf} disabled={!isPdfReady || images.length === 0 || isGenerating}>
+                <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
+                  <Button onClick={exportPdf} disabled={!isPdfReady || images.length === 0 || isGenerating} className="w-full">
                     {isGenerating ? <Loader2Icon className="h-4 w-4 animate-spin" /> : <CheckIcon className="h-4 w-4" />}
                     Merge to PDF
                   </Button>
@@ -789,20 +561,24 @@ function SessionHost() {
                     variant="outline"
                     onClick={() => result && downloadLink(result.url, result.filename)}
                     disabled={!result}
+                    className="w-full border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
                   >
-                    <DownloadIcon className="h-4 w-4" />
-                    Download
+                    <DownloadIcon className="h-4 w-4" /> Download
                   </Button>
-                  <Button variant="outline" onClick={resetSession} disabled={images.length === 0}>
-                    <RefreshCcwIcon className="h-4 w-4" />
-                    Clear Pages
+                  <Button
+                    variant="outline"
+                    onClick={resetSession}
+                    disabled={images.length === 0}
+                    className="w-full border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  >
+                    <RefreshCcwIcon className="h-4 w-4" /> Clear
                   </Button>
                 </div>
               </div>
 
               {images.length === 0 ? (
                 <div className="flex min-h-56 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
-                  Waiting for captured pages from connected phone(s).
+                  Waiting for image uploads from phone.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -810,50 +586,28 @@ function SessionHost() {
                     <div key={item.id} className="rounded-lg border p-2">
                       <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-muted">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={item.url}
-                          alt={item.name}
-                          className="h-full w-full object-contain"
-                          style={{ transform: `rotate(${item.rotation}deg)` }}
-                        />
-                        {item.crop ? (
-                          <div className="absolute right-2 top-2 rounded bg-black/60 px-2 py-1 text-[10px] text-white">
-                            Cropped
-                          </div>
-                        ) : null}
+                        <img src={item.url} alt={item.name} className="h-full w-full object-contain" style={{ transform: `rotate(${item.rotation}deg)` }} />
+                        {item.wasCropped ? <div className="absolute right-2 top-2 rounded bg-black/60 px-2 py-1 text-[10px] text-white">Cropped</div> : null}
                       </div>
                       <div className="mt-2 truncate text-xs text-muted-foreground">{item.name}</div>
-                      <div className="mt-2 grid grid-cols-3 gap-1">
-                        <Button variant="outline" size="icon" onClick={() => moveImage(item.id, "up")} disabled={index === 0}>
-                          <ArrowUpIcon className="h-4 w-4" />
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <Button variant="outline" size="sm" onClick={() => moveImage(item.id, "up")} disabled={index === 0} className="h-9">
+                          <ArrowUpIcon className="h-4 w-4" /> Up
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateImage(item.id, (current) => ({ ...current, rotation: (current.rotation + 270) % 360 }))}
-                        >
-                          <RotateCcwIcon className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => moveImage(item.id, "down")} disabled={index === images.length - 1} className="h-9">
+                          <ArrowDownIcon className="h-4 w-4" /> Down
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => moveImage(item.id, "down")}
-                          disabled={index === images.length - 1}
-                        >
-                          <ArrowDownIcon className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => updateImage(item.id, (current) => ({ ...current, rotation: (current.rotation + 270) % 360 }))} className="h-9">
+                          <RotateCcwIcon className="h-4 w-4" /> Left
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateImage(item.id, (current) => ({ ...current, rotation: (current.rotation + 90) % 360 }))}
-                        >
-                          <RotateCwIcon className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => updateImage(item.id, (current) => ({ ...current, rotation: (current.rotation + 90) % 360 }))} className="h-9">
+                          <RotateCwIcon className="h-4 w-4" /> Right
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => setEditorId(item.id)}>
-                          <ScissorsIcon className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => setEditorId(item.id)} className="h-9 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10">
+                          <ScissorsIcon className="h-4 w-4" /> Crop
                         </Button>
-                        <Button variant="destructive" size="icon" onClick={() => deleteImage(item.id)}>
-                          <Trash2Icon className="h-4 w-4" />
+                        <Button variant="destructive" size="sm" onClick={() => deleteImage(item.id)} className="h-9">
+                          <Trash2Icon className="h-4 w-4" /> Delete
                         </Button>
                       </div>
                     </div>
@@ -871,51 +625,33 @@ function SessionHost() {
             <SheetTitle>Crop Page</SheetTitle>
             <SheetDescription>Adjust crop bounds for this scanned page.</SheetDescription>
           </SheetHeader>
-
           <div className="flex-1 px-4 pb-2">
             <div className="relative h-[55vh] overflow-hidden rounded-md border bg-black">
               {editorImage ? (
                 <Cropper
-                  image={editorImage.url}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={3 / 4}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={(_, pixels) => setCropPixels(pixels)}
-                  restrictPosition={false}
+                  ref={cropperRef}
+                  key={editorImage.id}
+                  src={editorBlobUrl || editorImage.url}
+                  className="set-coordinates-example__cropper"
+                  stencilProps={{ minAspectRatio: 1 / 2 }}
                 />
               ) : null}
             </div>
-
-            <div className="mt-4 space-y-2">
-              <Label htmlFor="scan-crop-zoom">Zoom</Label>
-              <input
-                id="scan-crop-zoom"
-                type="range"
-                min={1}
-                max={4}
-                step={0.1}
-                value={zoom}
-                onChange={(event) => setZoom(Number(event.target.value))}
-                className="w-full"
-              />
-            </div>
           </div>
-
           <SheetFooter>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (!editorImage) return;
-                  updateImage(editorImage.id, (current) => ({ ...current, crop: undefined }));
-                  setEditorId(null);
-                }}
-              >
-                Clear Crop
+              {editorImage?.wasCropped ? (
+                <Button variant="outline" onClick={resetCrop} disabled={isApplyingCrop}>
+                  Reset Crop
+                </Button>
+              ) : null}
+              <Button variant="outline" onClick={() => {
+                setEditorId(null);
+              }} disabled={isApplyingCrop}>Cancel</Button>
+              <Button onClick={() => void applyCrop()} disabled={isApplyingCrop}>
+                {isApplyingCrop ? <Loader2Icon className="h-4 w-4 animate-spin" /> : null}
+                Save Crop
               </Button>
-              <Button onClick={applyCrop}>Apply Crop</Button>
             </div>
           </SheetFooter>
         </SheetContent>
@@ -924,15 +660,11 @@ function SessionHost() {
   );
 }
 
-function MobileScanner({ host }: { host: string }) {
-  const buildTag = "scan-debug-v2";
+function MobileScanner({ room }: { room: string }) {
+  const buildTag = "scan-upload-v1";
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const peerRef = useRef<Peer | null>(null);
-  const connRef = useRef<DataConnection | null>(null);
-  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [peerState, setPeerState] = useState<PeerState>("initializing");
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isSending, setIsSending] = useState(false);
   const [capturedCount, setCapturedCount] = useState(0);
@@ -941,25 +673,15 @@ function MobileScanner({ host }: { host: string }) {
     jpegQuality: 0.9,
     autoCrop: true,
   });
-  const [debugLog, setDebugLog] = useState<string[]>([]);
-  const [reconnectTick, setReconnectTick] = useState(0);
-
-  const pushLog = useCallback((entry: string) => {
-    const line = `${new Date().toLocaleTimeString()} ${entry}`;
-    setDebugLog((prev) => [...prev.slice(-79), line]);
-  }, []);
 
   const stopStream = useCallback(() => {
     if (!streamRef.current) return;
-    for (const track of streamRef.current.getTracks()) {
-      track.stop();
-    }
+    for (const track of streamRef.current.getTracks()) track.stop();
     streamRef.current = null;
   }, []);
 
   const startCamera = useCallback(async (mode: "environment" | "user") => {
     stopStream();
-
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
       video: {
@@ -968,7 +690,6 @@ function MobileScanner({ host }: { host: string }) {
         height: { ideal: 1080 },
       },
     });
-
     streamRef.current = stream;
     if (videoRef.current) {
       videoRef.current.srcObject = stream;
@@ -976,40 +697,20 @@ function MobileScanner({ host }: { host: string }) {
     }
   }, [stopStream]);
 
-  const sendImage = useCallback(async (blob: Blob) => {
-    const conn = connRef.current;
-    if (!conn || !conn.open) {
-      toast.error("Phone is not connected to desktop session");
-      return;
+  const uploadBlob = useCallback(async (blob: Blob) => {
+    const file = new File([blob], `scan-${Date.now()}.jpg`, { type: "image/jpeg" });
+    const form = new FormData();
+    form.append("file", file);
+
+    const res = await fetch(`/api/scan-pdf/upload?room=${encodeURIComponent(room)}`, {
+      method: "POST",
+      body: form,
+    });
+
+    if (!res.ok) {
+      throw new Error("Upload failed");
     }
-
-    const bytes = await blobToBytes(blob);
-    const captureId = makeId("scan");
-    const totalChunks = Math.ceil(bytes.length / CHUNK_SIZE);
-
-    const meta: CaptureMeta = {
-      id: captureId,
-      name: `scan-${capturedCount + 1}.jpg`,
-      size: bytes.length,
-      type: "image/jpeg",
-      width: 0,
-      height: 0,
-      createdAt: Date.now(),
-      totalChunks,
-    };
-
-    conn.send({ type: "capture-meta", payload: meta } as WireMessage);
-
-    for (let i = 0; i < totalChunks; i++) {
-      const from = i * CHUNK_SIZE;
-      const to = Math.min(bytes.length, from + CHUNK_SIZE);
-      const chunk = bytes.subarray(from, to);
-      conn.send({ type: "capture-chunk", id: captureId, index: i, data: bytesToBase64(chunk) } as WireMessage);
-    }
-
-    conn.send({ type: "capture-complete", id: captureId } as WireMessage);
-    setCapturedCount((prev) => prev + 1);
-  }, [capturedCount]);
+  }, [room]);
 
   const captureFrame = useCallback(async () => {
     if (isSending) return;
@@ -1021,7 +722,6 @@ function MobileScanner({ host }: { host: string }) {
     }
 
     setIsSending(true);
-
     try {
       const maxWidth = captureSettings.maxWidth;
       const scale = video.videoWidth > maxWidth ? maxWidth / video.videoWidth : 1;
@@ -1045,157 +745,40 @@ function MobileScanner({ host }: { host: string }) {
           cropped.height = autoBox.height;
           const cctx = cropped.getContext("2d");
           if (cctx) {
-            cctx.drawImage(
-              canvas,
-              autoBox.x,
-              autoBox.y,
-              autoBox.width,
-              autoBox.height,
-              0,
-              0,
-              autoBox.width,
-              autoBox.height,
-            );
+            cctx.drawImage(canvas, autoBox.x, autoBox.y, autoBox.width, autoBox.height, 0, 0, autoBox.width, autoBox.height);
             sourceCanvas = cropped;
           }
         }
       }
 
       const blob = await canvasToBlob(sourceCanvas, "image/jpeg", captureSettings.jpegQuality);
-      await sendImage(blob);
-      toast.success("Page sent to desktop");
+      await uploadBlob(blob);
+      setCapturedCount((prev) => prev + 1);
+      toast.success("Page uploaded to desktop room");
     } catch {
-      toast.error("Failed to capture photo");
+      toast.error("Failed to capture/upload photo");
     } finally {
       setIsSending(false);
     }
-  }, [captureSettings, isSending, sendImage]);
+  }, [captureSettings, isSending, uploadBlob]);
 
   useEffect(() => {
     startCamera(facingMode).catch(() => {
       toast.error("Camera permission is required");
-      setPeerState("error");
     });
-  }, [facingMode, startCamera]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const connect = () => {
-      if (cancelled) return;
-      pushLog(`mobile peer init -> host ${host}`);
-
-      const peer = new Peer(PEER_OPTIONS);
-
-      peerRef.current = peer;
-
-      peer.on("open", () => {
-        pushLog("mobile peer open");
-        const conn = peer.connect(host, { reliable: true });
-        connRef.current = conn;
-        pushLog("dialing host...");
-
-        conn.on("open", () => {
-          pushLog("data channel open");
-          setPeerState("connected");
-          conn.send({ type: "hello", device: "mobile" } as WireMessage);
-        });
-
-        conn.on("data", (raw) => {
-          const message = raw as WireMessage;
-          if (!message || typeof message !== "object" || !("type" in message)) return;
-          if (message.type === "settings") {
-            pushLog("received capture settings");
-            setCaptureSettings(message.payload);
-          }
-        });
-
-        const scheduleRetry = () => {
-          if (cancelled) return;
-          pushLog("channel closed; scheduling reconnect");
-          setPeerState("waiting");
-          try {
-            peer.destroy();
-          } catch {
-            // no-op
-          }
-          retryTimerRef.current = setTimeout(connect, 1500);
-        };
-
-        conn.on("close", scheduleRetry);
-        conn.on("error", (error) => {
-          pushLog(`channel error: ${String((error as Error).message || error)}`);
-          scheduleRetry();
-        });
-      });
-
-      peer.on("error", () => {
-        if (cancelled) return;
-        pushLog("mobile peer error; scheduling reconnect");
-        setPeerState("waiting");
-        try {
-          peer.destroy();
-        } catch {
-          // no-op
-        }
-        retryTimerRef.current = setTimeout(connect, 1500);
-      });
-
-      peer.on("disconnected", () => {
-        if (cancelled) return;
-        pushLog("mobile peer disconnected; scheduling reconnect");
-        setPeerState("waiting");
-        try {
-          peer.destroy();
-        } catch {
-          // no-op
-        }
-        retryTimerRef.current = setTimeout(connect, 1500);
-      });
-    };
-
-    setPeerState("initializing");
-    connect();
-
-    return () => {
-      cancelled = true;
-      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-      connRef.current?.close();
-      peerRef.current?.destroy();
-      stopStream();
-    };
-  }, [host, pushLog, reconnectTick, stopStream]);
+    return () => stopStream();
+  }, [facingMode, startCamera, stopStream]);
 
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-md space-y-4">
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <SmartphoneIcon className="h-4 w-4" />
-            Mobile Scanner
+            <SmartphoneIcon className="h-4 w-4" /> Mobile Scanner
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Capture pages and they appear on desktop in real time.
-          </p>
-          <div className="mt-2 inline-flex items-center rounded-md border px-2 py-1 text-xs">
-            {peerState === "connected"
-              ? "Connected"
-              : peerState === "waiting"
-                ? "Reconnecting..."
-                : peerState === "error"
-                  ? "Connection error"
-                  : "Connecting..."}
-          </div>
+          <p className="mt-1 text-xs text-muted-foreground">Room upload mode. Capture and send pages instantly.</p>
           <div className="mt-2 text-[11px] text-muted-foreground">Build: {buildTag}</div>
-        </div>
-
-        <div className="rounded-lg border p-3">
-          <div className="mb-1 text-xs font-medium">Connection Debug</div>
-          <div className="max-h-36 overflow-auto rounded border bg-muted/30 p-2 text-[11px] font-mono">
-            {debugLog.length === 0
-              ? `No events yet (${buildTag})`
-              : debugLog.map((line) => <div key={line}>{line}</div>)}
-          </div>
+          <div className="mt-1 text-[11px] break-all text-muted-foreground">Room: {room}</div>
         </div>
 
         <div className="overflow-hidden rounded-xl border bg-black">
@@ -1203,32 +786,35 @@ function MobileScanner({ host }: { host: string }) {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setFacingMode((prev) => (prev === "environment" ? "user" : "environment"))}
-          >
-            <SwitchCameraIcon className="h-4 w-4" />
-            Switch Camera
+          <Button variant="outline" onClick={() => setFacingMode((prev) => (prev === "environment" ? "user" : "environment"))}>
+            <SwitchCameraIcon className="h-4 w-4" /> Switch Camera
           </Button>
-          <Button onClick={captureFrame} disabled={peerState !== "connected" || isSending}>
+          <Button onClick={captureFrame} disabled={isSending}>
             {isSending ? <Loader2Icon className="h-4 w-4 animate-spin" /> : <CameraIcon className="h-4 w-4" />}
-            Capture Page
+            Capture + Upload
           </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setReconnectTick((prev) => prev + 1)}
-        >
-          <RefreshCcwIcon className="h-4 w-4" />
-          Reconnect
-        </Button>
 
         <div className="rounded-lg border p-3 text-sm text-muted-foreground">
-          <div>
-            Pages sent: <span className="font-medium text-foreground">{capturedCount}</span>
-          </div>
-          <div className="mt-1 text-xs">
-            Quality {Math.round(captureSettings.jpegQuality * 100)}% | Width {captureSettings.maxWidth}px | Auto crop {captureSettings.autoCrop ? "on" : "off"}
+          <div>Pages uploaded: <span className="font-medium text-foreground">{capturedCount}</span></div>
+          <div className="mt-1 text-xs">Quality {Math.round(captureSettings.jpegQuality * 100)}% | Width {captureSettings.maxWidth}px | Auto crop {captureSettings.autoCrop ? "on" : "off"}</div>
+        </div>
+
+        <div className="rounded-lg border bg-background p-4">
+          <h3 className="text-sm font-medium">Capture Settings</h3>
+          <div className="mt-3 space-y-3 text-sm">
+            <div>
+              <Label htmlFor="scan-setting-width-mobile">Image width: {captureSettings.maxWidth}px</Label>
+              <input id="scan-setting-width-mobile" type="range" min={1000} max={2600} step={100} value={captureSettings.maxWidth} onChange={(event) => setCaptureSettings((prev) => ({ ...prev, maxWidth: Number(event.target.value) }))} className="w-full" />
+            </div>
+            <div>
+              <Label htmlFor="scan-setting-quality-mobile">JPEG quality: {Math.round(captureSettings.jpegQuality * 100)}%</Label>
+              <input id="scan-setting-quality-mobile" type="range" min={0.5} max={1} step={0.05} value={captureSettings.jpegQuality} onChange={(event) => setCaptureSettings((prev) => ({ ...prev, jpegQuality: Number(event.target.value) }))} className="w-full" />
+            </div>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={captureSettings.autoCrop} onChange={(event) => setCaptureSettings((prev) => ({ ...prev, autoCrop: event.target.checked }))} />
+              Auto detect + crop document
+            </label>
           </div>
         </div>
       </div>
@@ -1239,22 +825,20 @@ function MobileScanner({ host }: { host: string }) {
 export function PageClient() {
   const searchParams = useSearchParams();
   const mobile = searchParams.get("mobile") === "1";
-  const host = searchParams.get("host") || "";
+  const room = searchParams.get("room") || "";
 
   if (mobile) {
-    if (!host) {
+    if (!room) {
       return (
         <div className="flex min-h-[60vh] items-center justify-center p-6">
           <div className="max-w-md rounded-lg border p-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Missing session host. Open this page by scanning the desktop QR code.
-            </p>
+            <p className="text-sm text-muted-foreground">Missing room id. Open this page by scanning the desktop QR code.</p>
           </div>
         </div>
       );
     }
 
-    return <MobileScanner host={host} />;
+    return <MobileScanner room={room} />;
   }
 
   return <SessionHost />;
