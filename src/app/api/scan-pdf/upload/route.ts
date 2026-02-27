@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addImageToRoom } from "@/lib/scan-pdf/store";
+import { getValidatedRoomId } from "../_shared";
 
 const MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
 
@@ -11,9 +12,9 @@ function makeId() {
 }
 
 export async function POST(req: NextRequest) {
-  const roomId = req.nextUrl.searchParams.get("room")?.trim();
+  const roomId = getValidatedRoomId(req);
   if (!roomId) {
-    return NextResponse.json({ error: "room is required" }, { status: 400 });
+    return NextResponse.json({ error: "invalid room id" }, { status: 400 });
   }
 
   try {
@@ -22,6 +23,9 @@ export async function POST(req: NextRequest) {
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "file is required" }, { status: 400 });
+    }
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "Only image uploads are allowed" }, { status: 415 });
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());

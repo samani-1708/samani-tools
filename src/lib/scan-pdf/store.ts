@@ -20,6 +20,7 @@ type ScanStore = {
 
 const ROOM_TTL_MS = 1000 * 60 * 30;
 const IMAGE_TTL_MS = 1000 * 60 * 5;
+const MAX_IMAGES_PER_ROOM = 60;
 
 function now() {
   return Date.now();
@@ -72,22 +73,43 @@ export function ensureRoom(roomId: string): ScanRoom {
 
 export function addImageToRoom(roomId: string, image: ScanImageRecord) {
   const room = ensureRoom(roomId);
+  if (room.images.size >= MAX_IMAGES_PER_ROOM) {
+    let oldestId: string | null = null;
+    let oldestCreatedAt = Number.POSITIVE_INFINITY;
+    for (const [id, current] of room.images.entries()) {
+      if (current.createdAt < oldestCreatedAt) {
+        oldestCreatedAt = current.createdAt;
+        oldestId = id;
+      }
+    }
+    if (oldestId) {
+      room.images.delete(oldestId);
+    }
+  }
   room.images.set(image.id, image);
   room.touchedAt = now();
 }
 
 export function getRoomImages(roomId: string) {
-  const room = ensureRoom(roomId);
+  cleanupScanRooms();
+  const room = getStore().rooms.get(roomId);
+  if (!room) return null;
+  room.touchedAt = now();
   return Array.from(room.images.values()).sort((a, b) => a.createdAt - b.createdAt);
 }
 
 export function getRoomImage(roomId: string, imageId: string) {
-  const room = ensureRoom(roomId);
+  cleanupScanRooms();
+  const room = getStore().rooms.get(roomId);
+  if (!room) return null;
+  room.touchedAt = now();
   return room.images.get(imageId) || null;
 }
 
 export function takeRoomImage(roomId: string, imageId: string) {
-  const room = ensureRoom(roomId);
+  cleanupScanRooms();
+  const room = getStore().rooms.get(roomId);
+  if (!room) return null;
   const image = room.images.get(imageId) || null;
   if (image) {
     room.images.delete(imageId);
@@ -97,7 +119,9 @@ export function takeRoomImage(roomId: string, imageId: string) {
 }
 
 export function clearRoom(roomId: string) {
-  const room = ensureRoom(roomId);
+  const room = getStore().rooms.get(roomId);
+  if (!room) return false;
   room.images.clear();
   room.touchedAt = now();
+  return true;
 }

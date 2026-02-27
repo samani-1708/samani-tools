@@ -407,7 +407,7 @@ function SessionHost() {
 
     let timerId: number | null = null;
     let cancelled = false;
-    let hasShownManifestError = false;
+    let hasShownRoomIssue = false;
     let delayMs = 1500;
 
     const tick = async () => {
@@ -420,11 +420,14 @@ function SessionHost() {
 
         const res = await fetch(`/api/scan-pdf/manifest?room=${encodeURIComponent(roomId)}&since=${sinceRef.current}`, { cache: "no-store" });
         if (!res.ok) {
-          if (!hasShownManifestError && res.status === 404) {
-            hasShownManifestError = true;
-            toast.error("Scan API route not found. Restart dev server or redeploy latest build.");
+          if (!hasShownRoomIssue && res.status === 404) {
+            hasShownRoomIssue = true;
+            toast.error("Scan room expired or missing. Create a new room and reconnect your phone.");
+          } else if (!hasShownRoomIssue && res.status === 400) {
+            hasShownRoomIssue = true;
+            toast.error("Invalid scan room id. Create a new room.");
           }
-          delayMs = 2500;
+          delayMs = res.status === 404 ? 5000 : 2500;
           return;
         }
         const payload = (await res.json()) as {
@@ -708,7 +711,8 @@ function MobileScanner({ room }: { room: string }) {
     });
 
     if (!res.ok) {
-      throw new Error("Upload failed");
+      const payload = await res.json().catch(() => null) as { error?: string } | null;
+      throw new Error(payload?.error || "Upload failed");
     }
   }, [room]);
 
@@ -755,8 +759,8 @@ function MobileScanner({ room }: { room: string }) {
       await uploadBlob(blob);
       setCapturedCount((prev) => prev + 1);
       toast.success("Page uploaded to desktop room");
-    } catch {
-      toast.error("Failed to capture/upload photo");
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to capture/upload photo");
     } finally {
       setIsSending(false);
     }
