@@ -85,9 +85,9 @@ export function StandardToolSeoSections(props: StandardToolSeoProps) {
           <Badge className="bg-white dark:bg-card border-border text-foreground text-[11px] md:text-xs">
             {hero.badge}
           </Badge>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight text-balance">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight text-balance">
             {hero.title}
-          </h1>
+          </h2>
           <p className="text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed text-pretty max-w-3xl mx-auto">
             {hero.description}
           </p>

@@ -15,4 +15,3 @@ export function ToolSeo({ config }: { config: ToolSeoConfig }) {
     </>
   );
 }
-
