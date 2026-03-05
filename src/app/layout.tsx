@@ -7,7 +7,6 @@ import { BRAND_NAME } from "./common/constants";
 import { LayoutShell } from "./common/layout-shell";
 import { GlobalSeoJsonLd } from "./common/seo-jsonld";
 import { BuyMeACoffeeFloatingScript } from "@/app/common/bmc";
-import { AdsenseScript } from "@/app/common/adsense";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,9 +35,6 @@ export const metadata: Metadata = {
     "browser based tools",
     "private file processing",
   ],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: `${BRAND_NAME} - Free PDF and Image Tools`,
     description:
@@ -87,8 +83,6 @@ type RootLayoutProps = Readonly<{
 
 export default async function RootLayout(props: RootLayoutProps) {
   const { children } = props;
-  const adsenseEnabled = process.env.NEXT_PUBLIC_ENABLE_ADSENSE === "true";
-  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID?.trim();
   const cookieStore = await cookies();
   const savedTheme = cookieStore.get("site-theme")?.value;
   const savedMode = cookieStore.get("site-mode")?.value;
@@ -104,9 +98,7 @@ export default async function RootLayout(props: RootLayoutProps) {
 
   return (
     <html lang="en" data-theme={theme} className={isDark ? "dark" : undefined}>
-      <head>
-        <AdsenseScript enabled={adsenseEnabled} clientId={adsenseClientId} />
-      </head>
+      <head />
       <body className="flex flex-col min-h-screen">
         <Script id="theme-init" strategy="beforeInteractive">{`
           (function () {

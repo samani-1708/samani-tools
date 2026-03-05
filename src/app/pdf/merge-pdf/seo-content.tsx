@@ -67,36 +67,39 @@ export function MergePdfSeoContent() {
   }
 
   return (
-    <StandardToolSeoSections
-      hero={{
-        badge: "Practical in-browser PDF merging",
-        title: mergePdfSeoSchema.hero?.header || mergePdfSeoSchema.title,
-        description:
-          mergePdfSeoSchema.hero?.subHeader || mergePdfSeoSchema.description,
-        highlights: mergePdfSeoSchema.hero?.highlights || [],
-      }}
-      intro={{
-        heading: infoSection.header,
-        paragraphs: infoSection.paragraphs || [],
-        bullets: (infoSection.bullets || []).map((text) => ({ text })),
-      }}
-      howTo={{
-        title: "How to combine PDF files",
-        description: "Upload files, set order, merge, and download.",
-        steps: stepsSection.steps,
-      }}
-      reasons={{
-        title: "Why use our merge PDF tool",
-        items: mergerToolItems,
-      }}
-      faq={{
-        title: faqSection.header,
-        items: faqSection.faqs,
-      }}
-      resources={{
-        title: "Related tools",
-        cards: articleCards,
-      }}
-    />
+    <>
+      <h1 className="sr-only">{mergePdfSeoSchema.title}</h1>
+      <StandardToolSeoSections
+        hero={{
+          badge: "Practical in-browser PDF merging",
+          title: mergePdfSeoSchema.hero?.header || mergePdfSeoSchema.title,
+          description:
+            mergePdfSeoSchema.hero?.subHeader || mergePdfSeoSchema.description,
+          highlights: mergePdfSeoSchema.hero?.highlights || [],
+        }}
+        intro={{
+          heading: infoSection.header,
+          paragraphs: infoSection.paragraphs || [],
+          bullets: (infoSection.bullets || []).map((text) => ({ text })),
+        }}
+        howTo={{
+          title: "How to combine PDF files",
+          description: "Upload files, set order, merge, and download.",
+          steps: stepsSection.steps,
+        }}
+        reasons={{
+          title: "Why use our merge PDF tool",
+          items: mergerToolItems,
+        }}
+        faq={{
+          title: faqSection.header,
+          items: faqSection.faqs,
+        }}
+        resources={{
+          title: "Related tools",
+          cards: articleCards,
+        }}
+      />
+    </>
   );
 }

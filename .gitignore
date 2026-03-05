@@ -28,6 +28,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+
 .env*.local
 
 # vercel
@@ -43,3 +44,9 @@ next-env.d.ts
 # pdfcpu-wasm assets copied from node_modules at build time
 public/js/pdfcpu/pdfcpu.wasm
 public/js/pdfcpu/pdfcpu-wasm.js
+
+
+mini-gl
+mini-photo-editor
+src-tauri
+tauri-dist

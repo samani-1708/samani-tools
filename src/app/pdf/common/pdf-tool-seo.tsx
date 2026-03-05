@@ -10,6 +10,7 @@ export type PdfToolSeoConfig = {
 export function PdfToolSeo({ config }: { config: PdfToolSeoConfig }) {
   return (
     <>
+      <h1 className="sr-only">{config.schema.title}</h1>
       <StandardToolSeoSections {...config.sections} />
       <PageSeoJsonLd schema={config.schema} />
     </>

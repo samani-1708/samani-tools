@@ -13,9 +13,9 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className="text-center space-y-3 sm:space-y-4 lg:space-y-6">
-      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-tight">
+      <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-tight">
         {header}
-      </h1>
+      </h2>
       {subHeader && (
         <Badge variant="secondary" className="inline-flex text-wrap text-xs sm:text-sm font-medium" style={{ textWrap: 'wrap'}}>
           {subHeader}
