@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DownloadIcon, Loader2Icon, RotateCcwIcon } from "lucide-react";
+import { DownloadIcon, RotateCcwIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { pdfjs } from "react-pdf";
 import { useEffect, useState } from "react";
@@ -21,6 +21,7 @@ import { usePDFUtils } from "../common/use-pdf-utils.hooks";
 import { FileObject, ImageInput } from "../common/types";
 import { PDFToolLayout } from "../common/layouts/pdf-tool-layout";
 import { ProcessingButton } from "../common/layouts/processing-button";
+import { compressImagesInPDF } from "./pdf-image-compress";
 
 const ViewPDF = dynamic(() => import("@/app/common/pdf-viewer/pdf-viewer"), {
   ssr: false,
@@ -128,7 +129,16 @@ export function PageClient() {
           { mode: "strict" },
         );
       } else {
-        compressedBytes = await utils.compress(fileObject, { mode: compressionMode });
+        // Step 1: pdfcpu structural optimization
+        const structurallyCompressed = await utils.compress(fileObject, {
+          mode: compressionMode,
+        });
+
+        // Step 2: Re-compress JPEG images embedded in the PDF using wasm-vips
+        // Quality is a slider fraction (0–1) relative to the estimated input quality.
+        // Relaxed: slight reduction to keep quality high; Strict: more aggressive.
+        const imageQuality = compressionMode === "strict" ? 0.72 : 0.88;
+        compressedBytes = await compressImagesInPDF(structurallyCompressed, imageQuality);
       }
 
       if (!compressedBytes) {
