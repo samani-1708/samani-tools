@@ -7,6 +7,7 @@ import { BRAND_NAME } from "./common/constants";
 import { LayoutShell } from "./common/layout-shell";
 import { GlobalSeoJsonLd } from "./common/seo-jsonld";
 import { BuyMeACoffeeFloatingScript } from "@/app/common/bmc";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -115,6 +116,7 @@ export default async function RootLayout(props: RootLayoutProps) {
             }
           })();
         `}</Script>
+        <NextTopLoader showSpinner={false} />
         <GlobalSeoJsonLd />
         <LayoutShell>
           {children}

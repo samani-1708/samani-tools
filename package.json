@@ -64,6 +64,7 @@
     "next": "16.1.4",
     "next-sitemap": "^4.2.3",
     "next-themes": "^0.4.6",
+    "nextjs-toploader": "^3.9.17",
     "pdf-lib": "^1.17.1",
     "pdfcpu-wasm": "^0.1.0",
     "peerjs": "^1.5.5",
