@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       "default-src 'self'",
       // unsafe-inline: required for Next.js inline scripts (theme init, SW registration)
       // wasm-unsafe-eval: allows WebAssembly without full unsafe-eval
-      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.buymeacoffee.com",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdnjs.buymeacoffee.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' blob: data: https://cdn.buymeacoffee.com",
@@ -38,6 +38,8 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "credentialless" },
         ],
       },
       {

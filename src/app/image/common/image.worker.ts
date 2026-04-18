@@ -113,6 +113,19 @@ interface PipelineOptions {
 // ---------------------------------------------------------------------------
 
 const HAS_SAB = typeof SharedArrayBuffer !== "undefined";
+// wasm-vips requires cross-origin isolation (pthreads / SharedArrayBuffer).
+const IS_COI: boolean = typeof self !== "undefined" && (self as unknown as { crossOriginIsolated?: boolean }).crossOriginIsolated === true;
+// wasm-vips Emscripten emval bindings use `new Function` at initialisation.
+// Check once so we can bail before those calls produce a detached uncaught rejection.
+const HAS_EVAL: boolean = (() => {
+  try {
+    // eslint-disable-next-line no-new-func
+    new Function("return 1")();
+    return true;
+  } catch {
+    return false;
+  }
+})();
 
 const HAS_SIMD = (() => {
   try {
@@ -167,7 +180,13 @@ async function loadVipsFactory(): Promise<any> { // eslint-disable-line @typescr
 }
 
 async function initVips(withHeif: boolean) {
-  const t0 = performance.now();
+  if (!IS_COI || !HAS_EVAL) {
+    // wasm-vips needs both cross-origin isolation (for SharedArrayBuffer pthreads)
+    // and `new Function` (for Emscripten emval bindings). When either is blocked,
+    // bail before any worker/postMessage code runs — those failures produce
+    // detached uncaught rejections that bypass try-catch.
+    throw new Error("vips unavailable: requires cross-origin isolation and eval");
+  }
   const Vips = await loadVipsFactory();
 
   vipsInstance = await Vips({
@@ -1083,6 +1102,45 @@ const api = {
   },
 
   async compress(file: WorkerImageInput, options: CompressImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
+    // Canvas path: no SharedArrayBuffer / cross-origin isolation required.
+    // Handles JPEG, PNG, WebP, AVIF from browser-decodable inputs.
+    const canvasTarget = options.format as "image/jpeg" | "image/png" | "image/webp" | "image/avif";
+    if (options.format !== "image/tiff" && isCanvasFriendlyInputMime(file.type || "")) {
+      try {
+        const srcBlob = new Blob([file.buffer], { type: file.type || "application/octet-stream" });
+        const srcBmp = await createImageBitmap(srcBlob);
+        const srcW = srcBmp.width;
+        const srcH = srcBmp.height;
+        const fit = fitWithinBox(srcW, srcH, options.maxWidth, options.maxHeight);
+        const canvas = new OffscreenCanvas(fit.width, fit.height);
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(srcBmp, 0, 0, fit.width, fit.height);
+          srcBmp.close();
+          const effectiveQuality = options.quality != null
+            ? resolveEffectiveQuality(options.quality, file.buffer.byteLength, srcW, srcH, file.type || "")
+            : undefined;
+          const q = effectiveQuality != null ? Math.max(0.1, Math.min(1, effectiveQuality)) : undefined;
+          const outBlob = await canvas.convertToBlob({
+            type: canvasTarget,
+            quality: options.format !== "image/png" ? q : undefined,
+          });
+          if (!outBlob.type || outBlob.type === canvasTarget) {
+            const outBuffer = await outBlob.arrayBuffer();
+            if (outBuffer.byteLength >= file.buffer.byteLength) {
+              const copy = file.buffer.slice(0);
+              return transfer({ buffer: copy, mime: file.type || options.format }, [copy]);
+            }
+            return transfer({ buffer: outBuffer, mime: canvasTarget }, [outBuffer]);
+          }
+        } else {
+          srcBmp.close();
+        }
+      } catch {
+        // fall through to vips pipeline
+      }
+    }
+
     return runPipeline(file, {
       ops: [{ type: "clamp", maxWidth: options.maxWidth, maxHeight: options.maxHeight }],
       format: options.format,
@@ -1100,6 +1158,65 @@ const api = {
   },
 
   async crop(file: WorkerImageInput, options: CropImageOptions): Promise<{ buffer: ArrayBuffer; mime: string }> {
+    const canvasTarget = options.format as "image/jpeg" | "image/png" | "image/webp" | "image/avif";
+    if (options.format !== "image/tiff" && isCanvasFriendlyInputMime(file.type || "")) {
+      try {
+        const { x, y, width, height } = options.area;
+        const cx = Math.round(x);
+        const cy = Math.round(y);
+        const cw = Math.max(1, Math.round(width));
+        const ch = Math.max(1, Math.round(height));
+        const srcBlob = new Blob([file.buffer], { type: file.type || "application/octet-stream" });
+        // Use 1-arg createImageBitmap (universal) + drawImage source rect instead of
+        // the 5-arg crop form which is unsupported in older Safari.
+        const srcBmp = await createImageBitmap(srcBlob);
+        const cropCanvas = new OffscreenCanvas(cw, ch);
+        const cropCtx = cropCanvas.getContext("2d");
+        if (!cropCtx) { srcBmp.close(); throw new Error("no 2d context"); }
+        cropCtx.drawImage(srcBmp, cx, cy, cw, ch, 0, 0, cw, ch);
+        srcBmp.close();
+        const bmp = await createImageBitmap(cropCanvas);
+        const cropW = bmp.width;
+        const cropH = bmp.height;
+        const rotation = options.rotation ?? 0;
+        const flip = options.flip ?? "none";
+
+        const rad = (rotation * Math.PI) / 180;
+        const cos = Math.abs(Math.cos(rad));
+        const sin = Math.abs(Math.sin(rad));
+        const outW = Math.ceil(cropW * cos + cropH * sin);
+        const outH = Math.ceil(cropW * sin + cropH * cos);
+
+        const canvas = new OffscreenCanvas(outW, outH);
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.translate(outW / 2, outH / 2);
+          if (rotation !== 0) ctx.rotate(rad);
+          if (flip === "horizontal" || flip === "both") ctx.scale(-1, 1);
+          if (flip === "vertical" || flip === "both") ctx.scale(1, -1);
+          ctx.drawImage(bmp, -cropW / 2, -cropH / 2);
+          bmp.close();
+
+          const effectiveQuality = options.quality != null
+            ? resolveEffectiveQuality(options.quality, file.buffer.byteLength, width, height, file.type || "")
+            : undefined;
+          const q = effectiveQuality != null ? Math.max(0.1, Math.min(1, effectiveQuality)) : undefined;
+          const outBlob = await canvas.convertToBlob({
+            type: canvasTarget,
+            quality: options.format !== "image/png" ? q : undefined,
+          });
+          if (!outBlob.type || outBlob.type === canvasTarget) {
+            const outBuffer = await outBlob.arrayBuffer();
+            return transfer({ buffer: outBuffer, mime: canvasTarget }, [outBuffer]);
+          }
+        } else {
+          bmp.close();
+        }
+      } catch {
+        // fall through to vips
+      }
+    }
+
     return runPipeline(file, {
       ops: [{ type: "crop", area: options.area, rotation: options.rotation, flip: options.flip }],
       format: options.format,
