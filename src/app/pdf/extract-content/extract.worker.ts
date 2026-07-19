@@ -232,7 +232,13 @@ async function extractTextAndSemantics(
 
   if (useOcrFallback) {
     // Force LSTM-only to avoid "legacy engine requested" failures.
+    // All paths point at self-hosted assets: the CSP has no CDN in script-src/connect-src,
+    // so tesseract.js's jsdelivr defaults for workerPath/corePath/langPath are blocked.
     ocrWorker = await createWorker("eng", OEM.LSTM_ONLY, {
+      workerPath: "/js/tesseract/worker.min.js",
+      corePath: "/js/tesseract",
+      langPath: "/js/tesseract/lang",
+      workerBlobURL: false,
       legacyCore: false,
       legacyLang: false,
       logger: (m: any) => {
@@ -256,7 +262,22 @@ async function extractTextAndSemantics(
         progress: Math.round((pageNum / doc.numPages) * 65),
       });
 
-      const page = await doc.getPage(pageNum);
+      let page: any;
+      try {
+        page = await doc.getPage(pageNum);
+      } catch (error) {
+        postLog(`page ${pageNum}: page load failed, skipping (${error instanceof Error ? error.message : String(error)})`);
+        pages.push({
+          pageNumber: pageNum,
+          text: "",
+          lines: [],
+          spans: [],
+          source: "native",
+          imageNames: [],
+        });
+        continue;
+      }
+
       let textContent: any;
       try {
         textContent = await page.getTextContent();
